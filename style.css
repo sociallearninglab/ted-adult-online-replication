@@ -1,3 +1,8 @@
+/* Override jsPsych content wrapper font-size */
+.jspsych-content {
+    font-size: 100%;
+}
+
 /* Base typography */
 .jspsych-display-element {
     font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -75,9 +80,11 @@
     margin-top: 10px;
 }
 
-.jspsych-slider-response-container label {
-    font-size: 15px;
-    font-weight: 600;
+.jspsych-slider-response-container label,
+#jspsych-html-slider-response-response .jspsych-slider-response-label,
+.jspsych-content .jspsych-slider-response-container label {
+    font-size: 30px !important;
+    font-weight: 700 !important;
     color: #555;
 }
 
@@ -152,6 +159,43 @@ input[type="range"]::-moz-range-thumb {
 
 .jspsych-survey-html-form select {
     padding: 6px 8px;
+}
+
+/* Captcha overlay */
+#captcha-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    text-align: center;
+}
+
+#captcha-container h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+#captcha-proceed {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 6px;
+    background-color: #3498db;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#captcha-proceed:hover {
+    background-color: #2980b9;
 }
 
 /* End screen */

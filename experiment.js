@@ -3,6 +3,10 @@ const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
 const TESTING_MODE = false;        // Set to true to force a specific condition
 const FORCED_CONDITION = 'diff';   // 'time' or 'diff' — only used when TESTING_MODE = true
 
+// Captcha: set your Turnstile site key and Worker URL here
+const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
+const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
+
 /* ==================== CONDITION ASSIGNMENT ==================== */
 const urlParams = new URLSearchParams(window.location.search);
 let condition;
@@ -115,7 +119,82 @@ timeline.push({
     images: allImages,
 });
 
-// 2. Consent
+// 2. Captcha verification
+const captcha_data = {};
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: '',
+    on_load: function () {
+        // Hide progress bar during captcha
+        const progressBar = document.getElementById('jspsych-progressbar-container');
+        if (progressBar) progressBar.style.visibility = 'hidden';
+
+        const container = document.getElementById('captcha-container');
+        const btn = document.getElementById('captcha-proceed');
+        const widgetTarget = document.getElementById('turnstile-widget');
+        container.style.display = 'block';
+
+        let attempts = 0;
+        const maxAttempts = 50;
+
+        function tryRender() {
+            if (typeof turnstile !== 'undefined') {
+                turnstile.render('#turnstile-widget', {
+                    sitekey: TURNSTILE_SITE_KEY,
+                    callback: async function (token) {
+                        captcha_data.token = token;
+
+                        if (VERIFY_WORKER_URL) {
+                            try {
+                                const res = await fetch(VERIFY_WORKER_URL, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ token }),
+                                });
+                                const verification = await res.json();
+                                captcha_data.server_verified = verification.success;
+                                captcha_data.challenge_ts = verification.challenge_ts;
+                                captcha_data.hostname = verification.hostname;
+                                captcha_data.verify_error_codes = verification.error_codes;
+                            } catch (err) {
+                                captcha_data.server_verified = null;
+                                captcha_data.verify_error = err.message;
+                            }
+                        }
+
+                        btn.style.display = 'inline-block';
+                    },
+                    'error-callback': function (errorCode) {
+                        captcha_data.errorCode = errorCode;
+                        widgetTarget.innerHTML =
+                            '<p style="color: #b22222;">Verification error. Please try reloading the page.</p>';
+                    }
+                });
+            } else if (attempts < maxAttempts) {
+                attempts++;
+                setTimeout(tryRender, 100);
+            } else {
+                widgetTarget.innerHTML =
+                    '<p style="color: #b22222; font-weight: bold;">' +
+                    'Security verification failed to load.<br>' +
+                    'Please disable any ad blockers for this page and reload.' +
+                    '</p>';
+            }
+        }
+
+        tryRender();
+
+        btn.onclick = () => {
+            container.style.display = 'none';
+            // Restore progress bar
+            if (progressBar) progressBar.style.visibility = 'visible';
+            jsPsych.finishTrial(captcha_data);
+        };
+    },
+    data: { trial_type_custom: 'captcha' },
+});
+
+// 3. Consent
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -217,7 +296,7 @@ mainTrialList.forEach((trial, index) => {
         },
         on_finish: function () {
             // Update progress bar
-            jsPsych.setProgressBar((index + 1) / totalMainTrials);
+            jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
 
             // Incremental save every 10 trials
             trialsSinceLastSave++;
