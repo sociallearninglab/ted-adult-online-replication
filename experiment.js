@@ -1,13 +1,12 @@
-/* ==================== CONFIGURATION ==================== */
+// config
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
-const TESTING_MODE = false;        // Set to true to force a specific condition
-const FORCED_CONDITION = 'diff';   // 'time' or 'diff' — only used when TESTING_MODE = true
-
-// Captcha: set your Turnstile site key and Worker URL here
+const TESTING_MODE = false;       // force a condition for testing
+const FORCED_CONDITION = 'diff';  // 'time' or 'diff' — only when TESTING_MODE is true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
+const PROLIFIC_REDIRECT_URL = 'https://app.prolific.com/submissions/complete?cc=XXXXXXX'; // swap in your completion code
 
-/* ==================== CONDITION ASSIGNMENT ==================== */
+// condition assignment
 const urlParams = new URLSearchParams(window.location.search);
 let condition;
 
@@ -19,12 +18,17 @@ if (TESTING_MODE) {
     condition = Math.random() < 0.5 ? 'time' : 'diff';
 }
 
-// Update URL to reflect condition
+// put condition in url
 const newUrl = new URL(window.location);
 newUrl.searchParams.set('condition', condition);
 window.history.replaceState({}, '', newUrl);
 
-/* ==================== CONDITION-SPECIFIC TEXT ==================== */
+// prolific url params
+const prolific_pid = urlParams.get('PROLIFIC_PID') || '';
+const study_id = urlParams.get('STUDY_ID') || '';
+const session_id = urlParams.get('SESSION_ID') || '';
+
+// condition-specific wording
 const conditionConfig = {
     diff: {
         taskDescription: 'judge how <b>difficult</b> it would be to build each structure from start to finish',
@@ -46,24 +50,30 @@ const conditionConfig = {
 
 const config = conditionConfig[condition];
 
-/* ==================== INITIALIZE JSPSYCH ==================== */
+// init jspsych
 const jsPsych = initJsPsych({
     show_progress_bar: true,
     auto_update_progress_bar: false,
     on_finish: function () {
         saveAllData();
+        // redirect to prolific
+        window.location.href = PROLIFIC_REDIRECT_URL;
     }
 });
 
 const subject_id = jsPsych.randomization.randomID(10);
 const filename = `${subject_id}.csv`;
 
+// attach to all rows
 jsPsych.data.addProperties({
     subject_id: subject_id,
     condition: condition,
+    prolific_pid: prolific_pid,
+    study_id: study_id,
+    session_id: session_id,
 });
 
-/* ==================== DATA SAVING ==================== */
+// data saving
 let saveCount = 0;
 
 function saveAllData() {
@@ -81,7 +91,7 @@ function saveAllData() {
     });
 }
 
-// Attempt to save on page close
+// backup save on tab close
 window.addEventListener('beforeunload', function () {
     saveCount++;
     const data = jsPsych.data.get().csv();
@@ -93,8 +103,7 @@ window.addEventListener('beforeunload', function () {
     navigator.sendBeacon('https://pipe.jspsych.org/api/data/', blob);
 });
 
-/* ==================== GENERATE TRIAL LIST ==================== */
-// Main trials: structures 7-36, each with _1 and _2 variants
+// trial list — structures 7-36, each w/ _1 and _2
 const trialPairs = [];
 for (let i = 7; i <= 36; i++) {
     trialPairs.push(jsPsych.randomization.shuffle([`${i}_1`, `${i}_2`]));
@@ -102,30 +111,30 @@ for (let i = 7; i <= 36; i++) {
 const shuffledPairs = jsPsych.randomization.shuffle(trialPairs);
 const mainTrialList = shuffledPairs.flat();
 
-// Warmup trials: 37_1 and 37_2, shuffled order
+// warmups shuffled
 const warmupOrder = jsPsych.randomization.shuffle(['37_1', '37_2']);
 
-// All image paths for preloading
+// preload imgs
 const allImages = mainTrialList.map(t => `stim_files/${t}.jpg`)
     .concat(warmupOrder.map(t => `stim_files/${t}.jpg`))
     .concat(['src/lab_logo.png']);
 
-/* ==================== TIMELINE ==================== */
+// timeline
 const timeline = [];
 
-// 1. Preload images
+// preload imgs
 timeline.push({
     type: jsPsychPreload,
     images: allImages,
 });
 
-// 2. Captcha verification
+// captcha
 const captcha_data = {};
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: '',
     on_load: function () {
-        // Hide progress bar during captcha
+        // hide progress bar
         const progressBar = document.getElementById('jspsych-progressbar-container');
         if (progressBar) progressBar.style.visibility = 'hidden';
 
@@ -135,7 +144,7 @@ timeline.push({
         container.style.display = 'block';
 
         let attempts = 0;
-        const maxAttempts = 50;
+        const maxAttempts = 50; // ~5s
 
         function tryRender() {
             if (typeof turnstile !== 'undefined') {
@@ -144,6 +153,7 @@ timeline.push({
                     callback: async function (token) {
                         captcha_data.token = token;
 
+                        // server-side verify
                         if (VERIFY_WORKER_URL) {
                             try {
                                 const res = await fetch(VERIFY_WORKER_URL, {
@@ -151,11 +161,11 @@ timeline.push({
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ token }),
                                 });
-                                const verification = await res.json();
-                                captcha_data.server_verified = verification.success;
-                                captcha_data.challenge_ts = verification.challenge_ts;
-                                captcha_data.hostname = verification.hostname;
-                                captcha_data.verify_error_codes = verification.error_codes;
+                                const v = await res.json();
+                                captcha_data.server_verified = v.success;
+                                captcha_data.challenge_ts = v.challenge_ts;
+                                captcha_data.hostname = v.hostname;
+                                captcha_data.verify_error_codes = v.error_codes;
                             } catch (err) {
                                 captcha_data.server_verified = null;
                                 captcha_data.verify_error = err.message;
@@ -186,7 +196,6 @@ timeline.push({
 
         btn.onclick = () => {
             container.style.display = 'none';
-            // Restore progress bar
             if (progressBar) progressBar.style.visibility = 'visible';
             jsPsych.finishTrial(captcha_data);
         };
@@ -194,7 +203,7 @@ timeline.push({
     data: { trial_type_custom: 'captcha' },
 });
 
-// 3. Consent
+// consent
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -214,7 +223,7 @@ timeline.push({
     }
 });
 
-// 3. Instructions
+// instructions
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -228,7 +237,7 @@ timeline.push({
     data: { trial_type_custom: 'instructions' },
 });
 
-// 4. Partial-start explanation
+// partial-start note
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -240,7 +249,7 @@ timeline.push({
     data: { trial_type_custom: 'example_init' },
 });
 
-// 5. Scale explanation
+// scale explanation
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -253,7 +262,7 @@ timeline.push({
     data: { trial_type_custom: 'example_intro' },
 });
 
-// 6. Warmup trials (37_1 and 37_2 in shuffled order)
+// warmups
 warmupOrder.forEach(trial => {
     const isEasy = trial === '37_1';
     timeline.push({
@@ -269,7 +278,7 @@ warmupOrder.forEach(trial => {
     });
 });
 
-// 7. Main trials (60 total)
+// main trials
 const totalMainTrials = mainTrialList.length;
 let trialsSinceLastSave = 0;
 
@@ -295,10 +304,9 @@ mainTrialList.forEach((trial, index) => {
             trial_number: index + 1,
         },
         on_finish: function () {
-            // Update progress bar
             jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
 
-            // Incremental save every 10 trials
+            // save every 10
             trialsSinceLastSave++;
             if (trialsSinceLastSave >= 10) {
                 saveAllData();
@@ -308,15 +316,15 @@ mainTrialList.forEach((trial, index) => {
     });
 });
 
-// 8. Demographics
+// demographics (optional)
 timeline.push({
     type: jsPsychSurveyHtmlForm,
     preamble: '<p>Finally, we have a few demographic questions for you.</p>',
     html: `
-        <p>How old are you? <input type="text" name="age" size="5" required></p>
-        <p>What is your native/first language? <input type="text" name="language" size="20" required></p>
+        <p>How old are you? <input type="text" name="age" size="5"></p>
+        <p>What is your native/first language? <input type="text" name="language" size="20"></p>
         <p>What is your ethnicity?
-            <select name="ethnicity" required>
+            <select name="ethnicity">
                 <option value="">-- Select --</option>
                 <option value="white">White</option>
                 <option value="hispanic">Hispanic or Latino</option>
@@ -327,7 +335,7 @@ timeline.push({
             </select>
         </p>
         <p>What is your gender?
-            <select name="gender" required>
+            <select name="gender">
                 <option value="">-- Select --</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -336,7 +344,7 @@ timeline.push({
         </p>
         <p>Do you have any colorblindness? <input type="text" name="colorblind" size="20"></p>
         <p>Were you able to focus throughout the experiment?
-            <select name="focus" required>
+            <select name="focus">
                 <option value="">-- Select --</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -349,21 +357,21 @@ timeline.push({
     data: { trial_type_custom: 'demographics' },
 });
 
-// 9. End screen
+// end screen
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="end-container">
             <p>You're finished - thanks for participating!</p>
-            <p>Your data has been saved. You may now close this window.</p>
+            <p>Redirecting you back to Prolific...</p>
         </div>
     `,
-    choices: ['Close'],
+    choices: ['Complete'],
     data: { trial_type_custom: 'end' },
     on_load: function () {
         saveAllData();
     }
 });
 
-// Run the experiment
+// run
 jsPsych.run(timeline);
