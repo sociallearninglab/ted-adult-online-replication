@@ -1,0 +1,138 @@
+<!-- ## Introduction -->
+<!-- Mika Asaba -->
+
+
+<!-- ## Code -->
+
+<html>
+
+<head>
+	<title>TED Difficulty</title>
+	<!-- Include the [jQuery library](http://jquery.com/), which helps you manipulate HTML elements from JS. -->
+	<script src="jquery-1.11.2.min.js"></script>
+	
+	<!-- Include my library, [mmturkey][mmturkey], which manages submitting data to Mechanical Turk. This defines a global object, <code>turk</code>, and attaches five properties to it, <code>hitId</code>, <code>assignmentId</code>, <code>workerId</code>, <code>previewMode</code>, and <code>turkSubmitTo</code>. It also provides a single method, <code>submit(data)</code>, which you use to submit data to Turk. If no submission URL has been provided (because, e.g. you're testing your code outside of the Turk environment), <code>submit</code> displays what would have been submitted (without, obviously, any Turk-specific variables like <code>workerId</code> and <code>assignmentId</code>).  -->
+	<!-- [mmturkey]: http://github.com/longouyang/mmturkey -->
+	<script src="mmturkey-0.6.js"></script>
+<!-- 	<script src="moment.js"></script>
+ -->	
+	<!-- <paper-slider value="0"></paper-slider> -->
+
+	<!-- Include the cascading style sheet (CSS), which lets us separate style from content. This stylesheet is important because it defines the notion of a **slide** and also makes things look nicer, which subjects appreciate. It's worth looking at the [source code](style.html). -->
+	<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- INSTRUCTIONS -->
+<div class="slide" id="instructions">
+
+  <div style="width: 500px; margin: 0 auto; text-align: center; background-color: #8C1516; padding: 20px 15px 10px 10px">
+    <img src="images/stanford.png" height="46" width="360" alt="Stanford University">
+  </div>
+
+	<p class="block-text">Welcome to the experiment! <b> You must use Google Chrome as your browser for this game</b>. In this game, you will view a series of block structures. For each structure, you will see a "START" picture and a "FINISH" picture. Your task is to judge how <b>difficult</b> it would be to build each structure from start to finish </b>.</p>
+
+<p>Click the button below when you are ready to begin.</p>	
+
+	<!-- Button to start the experiment. <code>this.blur()</code> removes the focus from the button, if the user pressed the button by using the keyboard, rather than the mouse. -->
+	<button type="button" onclick="this.blur(); experiment.next()">Start</button>
+
+<!--   <button type="button" onclick="this.blur(); getStrengths()">Start</button>
+ -->
+
+	<!-- Legal blurb that we're required to show. -->
+	<br><br>
+	<p class="block-text" id="legal">** This HIT is part of a scientific research project conducted by the Social Learning Lab at Stanford and has been approved by the IRB of Stanford University. Your decision to complete this HIT is voluntary. We will only have access to your worker ID and no other information to identify you. The only other information we will have, in addition to your response, is the time at which you completed the survey and the amount of time you spent to complete it. The results of the research may be presented at scientific meetings or published in scientific journals. Clicking on the 'START' button above indicates that you are at least 18 years of age, and agree to complete this HIT voluntarily.
+
+If you have any questions, concerns, or complaints about this research study, its procedures, risks, and benefits, contact the lab manager, Grace Bennett-Pierre, sll-inquiries-mturk@lists.stanford.edu, or call (650) 498-7832.
+
+If you are not satisfied with how this study is being conducted, or if you have any concerns, complaints, or general questions about the research or your rights as a participant, please contact the Stanford Institutional Review Board (IRB) to speak to someone independent of the research team at (650)-723-2480 or toll free at 1-866-680-2906. You can also write to the Stanford IRB, Stanford University, 3000 El Camino Real, Five Palo Alto Square, 4th Floor, Palo Alto, CA 94306.
+
+Protocol approval date: 12/3/14
+Protocol expiration date: 08/28/17
+</div>
+
+<div class="slide" id="example_init">
+<div style="width: 500px; margin: 0 auto; text-align: center; padding: 20px 15px 10px 10px"></div>
+<center><img src="http://web.stanford.edu/~masaba/Estimation/images/trial_pictures/Example_Initial.jpg" height="300" width="600"></center>
+<p class="block-text"><center>Somtimes at START, the structure will be partially made already. Please look carefully at both photos!</center></p>
+<button type="button" onclick="this.blur(); experiment.next()">Next</button>
+</div>
+
+<div class="slide" id="example_intro">
+<div style="width: 500px; margin: 0 auto; text-align: center; padding: 20px 15px 10px 10px"></div>
+	<p class="block-text">You will use a sliding scale from 0 (easy) to 100 (difficult) to mark your answer. You can drag the circle to respond.</p>
+
+	<p class="block-text">Here's an example of what you will see:<br></p>
+	<center> <img src="http://web.stanford.edu/~masaba/Estimation/images/trial_pictures/Example_Final.jpg" height="300" width="600" alt="Stanford University"></center>
+	<center> <img src="example_scale.png" height="100" width="400" alt="Stanford University"></center>
+	<button type="button" onclick="this.blur(); experiment.next()">Next</button>
+</div>
+
+
+<div class="slide" id="37_1">
+<div style="width: 500px; margin: 0 auto; text-align: center; padding: 20px 15px 10px 10px"></div>
+<center><img src="http://web.stanford.edu/~masaba/Estimation/images/trial_pictures/37_1.jpg" height="300" width="600"></center>
+<p class="block-text"><center>This is an example of an <b>easy</b> structure to build.</center></p>
+<button type="button" onclick="this.blur(); experiment.next()">Next</button>
+
+</div>
+
+<div class="slide" id="37_2">
+<div style="width: 500px; margin: 0 auto; text-align: center; padding: 20px 15px 10px 10px"></div>
+<center><img src="http://web.stanford.edu/~masaba/Estimation/images/trial_pictures/37_2.jpg" height="300" width="600"></center>
+<p class="block-text"><center>This is an example of a <b>difficult</b> structure to build.</center></p>
+<button type="button" onclick="this.blur(); experiment.next()">Next</button>
+
+</div>
+
+
+<!-- Demographics Page -->
+<div class="slide" id="demographics">
+	<p>Finally, we have a few demographic questions for you.</p>
+	<form onSubmit="submitDemographics();" id="demographicsForm" >
+How old are you?: <input type="text" name="Age" value=""><br>
+What is your native/first language?: <input type="text" name="Language" value=""><br>
+What is your ethnicity?: <select name="Ethnicity">
+	<option value="noresponse">No Response </option>
+    <option value="white">White</option>
+    <option value="hispanic">Hispanic or Latino</option>
+    <option value="asian">Asian/Pacific Islander</option>
+    <option value="black">Black or African American</option>
+	<option value="native">Native American</option>
+    <option value="other">Other</option>
+	</select>
+	<br><br>
+What is your gender?: <select name="Gender">
+	<option value="noresponse">No Response </option>
+	<option value="male">Male</option>
+    <option value="female">Female</option>
+	<option value="other">Other</option>
+	</select>
+Do you have any colorblindness?: <input type="text" name="Colorblind" value=""><br>
+Were you able to focus throughout the experiment?: <select name="Focus">
+	<option value="noresponse">No Response</option>
+	<option value="yes">Yes</option>
+    <option value="no">No</option>
+	<option value="kind of">Kind of</option>
+	</select>
+<br><br>
+Did you run into any issues?: <input type="text" name="Issues" value=""><br>
+
+	<button type="button" onclick="submitDemographics();experiment.end();">Submit</button>
+  </form>
+</div>
+
+<!-- The finish slide. -->
+<div class="slide" id="finished">
+	You're finished - thanks for participating! Submitting to Mechanical Turk...
+</div>
+
+<!-- Include the <a href="experiment.html">JavaScript file for the experiment</a>. As written, that script immediately executes commands, so we include it here at the end of the HTML file to ensure that resources referenced by the script actually exist. For instance, one of the immediately executed commands is <code>showSlide("instructions")</code>. If we loaded experiment.js, say, in the <code>head</code> section, <code>showSlide("instructions")</code> would fail because the <code>instructions</code> slide doesn't exist yet. It is possible to load the script in <code>head</code> but you have to ensure that any immediately executed commands, if they rely on potentially uninitialized HTML elements, are _delayed_ until the page is ready, using either [window.onload][onload] or jQuery's more robust [$(document).ready()][domReady]  -->
+<!-- [onload]: https://developer.mozilla.org/en/DOM/window.onload -->
+<!-- [domReady]: http://api.jquery.com/ready/ -->
+<script src="diff_scale.js"></script>
+
+</body>
+</html>
+

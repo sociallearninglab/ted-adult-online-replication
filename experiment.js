@@ -36,7 +36,9 @@ const conditionConfig = {
         sliderLabels: ['easy', 'difficult'],
         warmupEasy: 'This is an example of an <b>easy</b> structure to build.',
         warmupHard: 'This is an example of a <b>difficult</b> structure to build.',
-        scaleDescription: 'You will use a sliding scale from 0 (easy) to 100 (difficult) to mark your answer. You must drag the slider to respond.',
+        scaleDescription: 'You will use a sliding scale from 0 (easy) to 100 (difficult) to mark your answer. You can drag the circle to respond.',
+        exampleFinal: 'stim_files/Example_Final_Diff_Screenshot.png',
+        exampleInitial: 'stim_files/Example_Initial_Diff_Screenshot.png',
     },
     time: {
         taskDescription: 'estimate the <b>time</b> it would take to build each structure from start to finish',
@@ -44,7 +46,9 @@ const conditionConfig = {
         sliderLabels: ['0 seconds', '100 seconds'],
         warmupEasy: 'This is an example of a structure that would be <b>quick</b> to build.',
         warmupHard: 'This is an example of a structure that would take a <b>long time</b> to build.',
-        scaleDescription: 'You will use a sliding scale from 0 seconds to 100 seconds to mark your answer. You must drag the slider to respond.',
+        scaleDescription: 'You will use a sliding scale from 0 seconds to 100 seconds to mark your answer. You can drag the circle to respond.',
+        exampleFinal: 'stim_files/Example_Final_Time_Screenshot.png',
+        exampleInitial: 'stim_files/Example_Initial_Time_Screenshot.png',
     }
 };
 
@@ -117,7 +121,7 @@ const warmupOrder = jsPsych.randomization.shuffle(['37_1', '37_2']);
 // preload imgs
 const allImages = mainTrialList.map(t => `stim_files/${t}.jpg`)
     .concat(warmupOrder.map(t => `stim_files/${t}.jpg`))
-    .concat(['src/lab_logo.png']);
+    .concat([config.exampleFinal, config.exampleInitial, 'src/lab_logo.png']);
 
 // timeline
 const timeline = [];
@@ -211,7 +215,7 @@ timeline.push({
             <div style="text-align: center; margin-bottom: 20px;">
                 <img src="src/lab_logo.png" height="80">
             </div>
-            <p>By agreeing to take part in this research, you agree to view and rate a series of block structures. This experiment will take approximately 10 minutes to complete.</p>
+            <p>By agreeing to take part in this research, you agree to view and rate a series of block structures. This experiment will take approximately X minutes to complete.</p>
             <p>By answering the following questions, you are participating in a study being performed by cognitive scientists in the Stanford Department of Psychology. If you have questions about this research, please contact us at <a href="mailto:sociallearninglab@stanford.edu">sociallearninglab@stanford.edu</a>.</p>
             <p>You must be at least 18 years old to participate. Your participation in this research is voluntary. You may decline to answer any or all of the following questions. You may decline further participation, at any time, without adverse consequences. Your anonymity is assured; the researchers who have requested your participation will not receive any personal information about you.</p>
         </div>
@@ -241,8 +245,9 @@ timeline.push({
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-        <div class="instruction-container">
+        <div class="instruction-container" style="text-align: center;">
             <p>Sometimes at START, the structure will be partially made already. Please look carefully at both photos!</p>
+            <img src="${config.exampleInitial}" class="trial-image">
         </div>
     `,
     choices: ['Next'],
@@ -253,9 +258,10 @@ timeline.push({
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-        <div class="instruction-container">
+        <div class="instruction-container" style="text-align: center;">
             <p>${config.scaleDescription}</p>
-            <p>Here is an example of what you will see on each trial.</p>
+            <p>Here is an example of what you will see on each trial:</p>
+            <img src="${config.exampleFinal}" class="trial-image">
         </div>
     `,
     choices: ['Next'],
