@@ -1,6 +1,6 @@
 // config
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
-const TESTING_MODE = false;       // force a condition for testing
+const TESTING_MODE = true;       // force a condition for testing
 const FORCED_CONDITION = 'diff';  // 'time' or 'diff' — only when TESTING_MODE is true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
@@ -36,7 +36,7 @@ const conditionConfig = {
         sliderLabels: ['easy', 'difficult'],
         warmupEasy: 'This is an example of an <b>easy</b> structure to build.',
         warmupHard: 'This is an example of a <b>difficult</b> structure to build.',
-        scaleDescription: 'You will use a sliding scale from 0 (easy) to 100 (difficult) to mark your answer. You can drag the circle to respond.',
+        scaleDescription: 'You will use a sliding scale from 0 (easy) to 100 (difficult) to mark your answer.</p><p>You can drag the circle to respond.',
         exampleFinal: 'stim_files/Example_Final_Diff_Screenshot.png',
         exampleInitial: 'stim_files/Example_Initial_Diff_Screenshot.png',
     },
@@ -46,7 +46,7 @@ const conditionConfig = {
         sliderLabels: ['0 seconds', '100 seconds'],
         warmupEasy: 'This is an example of a structure that would be <b>quick</b> to build.',
         warmupHard: 'This is an example of a structure that would take a <b>long time</b> to build.',
-        scaleDescription: 'You will use a sliding scale from 0 seconds to 100 seconds to mark your answer. You can drag the circle to respond.',
+        scaleDescription: 'You will use a sliding scale from 0 seconds to 100 seconds to mark your answer.</p><p>You can drag the circle to respond.',
         exampleFinal: 'stim_files/Example_Final_Time_Screenshot.png',
         exampleInitial: 'stim_files/Example_Initial_Time_Screenshot.png',
     }
@@ -132,9 +132,9 @@ timeline.push({
     images: allImages,
 });
 
-// captcha
+// captcha (commented out for local testing)
 const captcha_data = {};
-timeline.push({
+/*timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: '',
     on_load: function () {
@@ -205,7 +205,7 @@ timeline.push({
         };
     },
     data: { trial_type_custom: 'captcha' },
-});
+});*/
 
 // consent
 timeline.push({
@@ -241,19 +241,6 @@ timeline.push({
     data: { trial_type_custom: 'instructions' },
 });
 
-// partial-start note
-timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: `
-        <div class="instruction-container" style="text-align: center;">
-            <p>Sometimes at START, the structure will be partially made already. Please look carefully at both photos!</p>
-            <img src="${config.exampleInitial}" class="trial-image">
-        </div>
-    `,
-    choices: ['Next'],
-    data: { trial_type_custom: 'example_init' },
-});
-
 // scale explanation
 timeline.push({
     type: jsPsychHtmlButtonResponse,
@@ -266,6 +253,19 @@ timeline.push({
     `,
     choices: ['Next'],
     data: { trial_type_custom: 'example_intro' },
+});
+
+// partial-start note
+timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container" style="text-align: center;">
+            <p>Sometimes at START, the structure will be partially made already. Please look carefully at both photos!</p>
+            <img src="${config.exampleInitial}" class="trial-image">
+        </div>
+    `,
+    choices: ['Next'],
+    data: { trial_type_custom: 'example_init' },
 });
 
 // warmups
@@ -304,6 +304,18 @@ mainTrialList.forEach((trial, index) => {
         require_movement: true,
         slider_width: 500,
         button_label: 'Continue',
+        on_load: function () {
+            const slider = document.getElementById('jspsych-html-slider-response-response');
+            const display = document.createElement('span');
+            display.id = 'slider-value-display';
+            display.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin-top: 8px; padding: 4px 16px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: fit-content; margin-left: auto; margin-right: auto;';
+            const suffix = condition === 'time' ? 's' : '';
+            display.textContent = slider.value + suffix;
+            slider.parentNode.insertBefore(display, slider.nextSibling.nextSibling);
+            slider.addEventListener('input', function () {
+                display.textContent = this.value + suffix;
+            });
+        },
         data: {
             trial_type_custom: 'rating',
             stimulus_id: trial,
