@@ -132,9 +132,9 @@ timeline.push({
     images: allImages,
 });
 
-// captcha (commented out for local testing)
+// captcha
 const captcha_data = {};
-/*timeline.push({
+timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: '',
     on_load: function () {
@@ -205,7 +205,7 @@ const captcha_data = {};
         };
     },
     data: { trial_type_custom: 'captcha' },
-});*/
+});
 
 // consent
 timeline.push({
