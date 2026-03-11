@@ -284,6 +284,19 @@ warmupOrder.forEach(trial => {
     });
 });
 
+// transition to main trials
+timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container" style="text-align: center;">
+            <p>You are now ready to begin.</p>
+            <p>Please click continue to start.</p>
+        </div>
+    `,
+    choices: ['Continue'],
+    data: { trial_type_custom: 'begin_main' },
+});
+
 // main trials
 const totalMainTrials = mainTrialList.length;
 let trialsSinceLastSave = 0;
@@ -306,14 +319,53 @@ mainTrialList.forEach((trial, index) => {
         button_label: 'Continue',
         on_load: function () {
             const slider = document.getElementById('jspsych-html-slider-response-response');
-            const display = document.createElement('span');
-            display.id = 'slider-value-display';
-            display.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin-top: 8px; padding: 4px 16px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: fit-content; margin-left: auto; margin-right: auto;';
             const suffix = condition === 'time' ? 's' : '';
-            display.textContent = slider.value + suffix;
-            slider.parentNode.insertBefore(display, slider.nextSibling.nextSibling);
+
+            // editable number input synced with slider
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = 'slider-value-input';
+            input.min = 0;
+            input.max = 100;
+            input.value = slider.value;
+            input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin: 8px auto 0; padding: 4px 8px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center;';
+            slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
+
+            if (suffix) {
+                const suffixLabel = document.createElement('span');
+                suffixLabel.textContent = suffix;
+                suffixLabel.style.cssText = 'font-size: 16px; color: #555; margin-left: 4px;';
+                input.insertAdjacentElement('afterend', suffixLabel);
+            }
+
+            // slider → input
             slider.addEventListener('input', function () {
-                display.textContent = this.value + suffix;
+                input.value = this.value;
+            });
+
+            // input → slider (mark as interacted for require_movement)
+            input.addEventListener('input', function () {
+                let val = parseInt(this.value, 10);
+                if (isNaN(val)) return;
+                val = Math.max(0, Math.min(100, val));
+                slider.value = val;
+                this.value = val;
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                slider.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+
+            // arrow keys on slider: left/down = -1, right/up = +1
+            slider.addEventListener('keydown', function (e) {
+                if (['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) {
+                    e.preventDefault();
+                    let val = parseInt(this.value, 10);
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') val = Math.max(0, val - 1);
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') val = Math.min(100, val + 1);
+                    this.value = val;
+                    input.value = val;
+                    this.dispatchEvent(new Event('input', { bubbles: true }));
+                    this.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             });
         },
         data: {
