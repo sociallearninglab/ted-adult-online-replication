@@ -138,26 +138,20 @@ timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: '',
     on_load: function () {
-        // hide progress bar
         const progressBar = document.getElementById('jspsych-progressbar-container');
         if (progressBar) progressBar.style.visibility = 'hidden';
-
         const container = document.getElementById('captcha-container');
         const btn = document.getElementById('captcha-proceed');
         const widgetTarget = document.getElementById('turnstile-widget');
         container.style.display = 'block';
-
         let attempts = 0;
-        const maxAttempts = 50; // ~5s
-
+        const maxAttempts = 50;
         function tryRender() {
             if (typeof turnstile !== 'undefined') {
                 turnstile.render('#turnstile-widget', {
                     sitekey: TURNSTILE_SITE_KEY,
                     callback: async function (token) {
                         captcha_data.token = token;
-
-                        // server-side verify
                         if (VERIFY_WORKER_URL) {
                             try {
                                 const res = await fetch(VERIFY_WORKER_URL, {
@@ -175,7 +169,6 @@ timeline.push({
                                 captcha_data.verify_error = err.message;
                             }
                         }
-
                         btn.style.display = 'inline-block';
                     },
                     'error-callback': function (errorCode) {
@@ -195,9 +188,7 @@ timeline.push({
                     '</p>';
             }
         }
-
         tryRender();
-
         btn.onclick = () => {
             container.style.display = 'none';
             if (progressBar) progressBar.style.visibility = 'visible';
@@ -301,6 +292,8 @@ timeline.push({
 const totalMainTrials = mainTrialList.length;
 let trialsSinceLastSave = 0;
 
+let _currentArrowHandler = null;
+
 mainTrialList.forEach((trial, index) => {
     timeline.push({
         type: jsPsychHtmlSliderResponse,
@@ -319,9 +312,6 @@ mainTrialList.forEach((trial, index) => {
         button_label: 'Continue',
         on_load: function () {
             const slider = document.getElementById('jspsych-html-slider-response-response');
-            console.log('[SLIDER DEBUG] slider element:', slider);
-            console.log('[SLIDER DEBUG] slider tagName:', slider?.tagName, 'type:', slider?.type);
-            console.log('[SLIDER DEBUG] slider tabIndex:', slider?.tabIndex);
             const suffix = condition === 'time' ? 's' : '';
 
             // editable number input synced with slider
@@ -341,28 +331,13 @@ mainTrialList.forEach((trial, index) => {
                 input.insertAdjacentElement('afterend', suffixLabel);
             }
 
-            // debug: log all events on slider
-            ['input', 'change', 'keydown', 'keyup', 'mousedown', 'focus', 'blur'].forEach(evt => {
-                slider.addEventListener(evt, function (e) {
-                    console.log(`[SLIDER DEBUG] event: ${evt}, value: ${this.value}, focused: ${document.activeElement === this}`);
-                });
-            });
-
-            // debug: log keyboard events on document to see if they reach slider
-            document.addEventListener('keydown', function (e) {
-                if (['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) {
-                    console.log(`[SLIDER DEBUG] document keydown: ${e.key}, activeElement:`, document.activeElement?.tagName, document.activeElement?.id);
-                }
-            });
-
-            // slider → input (covers drag AND arrow keys natively)
+            // slider → input (covers drag)
             slider.addEventListener('input', function () {
                 input.value = this.value;
             });
 
-            // input → slider (mark as interacted for require_movement)
+            // input → slider
             input.addEventListener('input', function () {
-                console.log('[SLIDER DEBUG] number input changed to:', this.value);
                 let val = parseInt(this.value, 10);
                 if (isNaN(val)) return;
                 val = Math.max(0, Math.min(100, val));
@@ -371,6 +346,27 @@ mainTrialList.forEach((trial, index) => {
                 slider.dispatchEvent(new Event('input', { bubbles: true }));
                 slider.dispatchEvent(new Event('change', { bubbles: true }));
             });
+
+            // arrow keys: jsPsych steals focus to BODY, so we intercept at
+            // capture phase on document and programmatically update the slider
+            if (_currentArrowHandler) {
+                document.removeEventListener('keydown', _currentArrowHandler, true);
+            }
+            _currentArrowHandler = function (e) {
+                if (document.activeElement === input) return;
+                if (!['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                let val = parseInt(slider.value, 10);
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') val = Math.max(0, val - 1);
+                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') val = Math.min(100, val + 1);
+                slider.value = val;
+                input.value = val;
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+                slider.dispatchEvent(new Event('change', { bubbles: true }));
+            };
+            document.addEventListener('keydown', _currentArrowHandler, true);
         },
         data: {
             trial_type_custom: 'rating',
@@ -378,6 +374,12 @@ mainTrialList.forEach((trial, index) => {
             trial_number: index + 1,
         },
         on_finish: function () {
+            // clean up arrow key handler
+            if (_currentArrowHandler) {
+                document.removeEventListener('keydown', _currentArrowHandler, true);
+                _currentArrowHandler = null;
+            }
+
             jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
 
             // save every 10
