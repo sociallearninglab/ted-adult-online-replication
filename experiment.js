@@ -338,7 +338,7 @@ mainTrialList.forEach((trial, index) => {
                 input.insertAdjacentElement('afterend', suffixLabel);
             }
 
-            // slider → input
+            // slider → input (covers drag AND arrow keys natively)
             slider.addEventListener('input', function () {
                 input.value = this.value;
             });
@@ -352,20 +352,6 @@ mainTrialList.forEach((trial, index) => {
                 this.value = val;
                 slider.dispatchEvent(new Event('input', { bubbles: true }));
                 slider.dispatchEvent(new Event('change', { bubbles: true }));
-            });
-
-            // arrow keys on slider: left/down = -1, right/up = +1
-            slider.addEventListener('keydown', function (e) {
-                if (['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) {
-                    e.preventDefault();
-                    let val = parseInt(this.value, 10);
-                    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') val = Math.max(0, val - 1);
-                    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') val = Math.min(100, val + 1);
-                    this.value = val;
-                    input.value = val;
-                    this.dispatchEvent(new Event('input', { bubbles: true }));
-                    this.dispatchEvent(new Event('change', { bubbles: true }));
-                }
             });
         },
         data: {
