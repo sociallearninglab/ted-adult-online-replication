@@ -327,6 +327,11 @@ mainTrialList.forEach((trial, index) => {
             style.textContent = '#slider-value-input::-webkit-inner-spin-button, #slider-value-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }';
             document.head.appendChild(style);
             // select all text on click for easy editing
+            input.addEventListener('mousedown', function (e) {
+                e.preventDefault();          // prevent caret placement
+                this.focus();
+                this.select();
+            });
             input.addEventListener('focus', function () { this.select(); });
             slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
 
@@ -360,6 +365,14 @@ mainTrialList.forEach((trial, index) => {
                 document.removeEventListener('keydown', _currentArrowHandler, true);
             }
             _currentArrowHandler = function (e) {
+                // typing a digit anywhere on the page focuses the input
+                if (document.activeElement !== input && e.key >= '0' && e.key <= '9') {
+                    e.preventDefault();
+                    input.value = '';
+                    input.focus();
+                    input.value = e.key;
+                    return;
+                }
                 if (document.activeElement === input) return;
                 if (!['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) return;
 
