@@ -314,27 +314,15 @@ mainTrialList.forEach((trial, index) => {
             const slider = document.getElementById('jspsych-html-slider-response-response');
             const suffix = condition === 'time' ? 's' : '';
 
-            // editable number input synced with slider, wrapped for centering
-            const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'display: flex; align-items: center; justify-content: center; margin-top: 8px; gap: 4px;';
-
+            // editable number input synced with slider
             const input = document.createElement('input');
             input.type = 'number';
             input.id = 'slider-value-input';
             input.min = 0;
             input.max = 100;
             input.value = slider.value;
-            input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; padding: 4px 8px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center;';
-            wrapper.appendChild(input);
-
-            if (suffix) {
-                const suffixLabel = document.createElement('span');
-                suffixLabel.textContent = suffix;
-                suffixLabel.style.cssText = 'font-size: 16px; color: #555;';
-                wrapper.appendChild(suffixLabel);
-            }
-
-            slider.parentNode.insertBefore(wrapper, slider.nextSibling.nextSibling);
+            input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin: 8px auto 0; padding: 4px 8px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center;';
+            slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
 
             // slider → input (covers drag)
             slider.addEventListener('input', function () {
