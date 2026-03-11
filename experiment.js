@@ -319,6 +319,9 @@ mainTrialList.forEach((trial, index) => {
         button_label: 'Continue',
         on_load: function () {
             const slider = document.getElementById('jspsych-html-slider-response-response');
+            console.log('[SLIDER DEBUG] slider element:', slider);
+            console.log('[SLIDER DEBUG] slider tagName:', slider?.tagName, 'type:', slider?.type);
+            console.log('[SLIDER DEBUG] slider tabIndex:', slider?.tabIndex);
             const suffix = condition === 'time' ? 's' : '';
 
             // editable number input synced with slider
@@ -338,6 +341,20 @@ mainTrialList.forEach((trial, index) => {
                 input.insertAdjacentElement('afterend', suffixLabel);
             }
 
+            // debug: log all events on slider
+            ['input', 'change', 'keydown', 'keyup', 'mousedown', 'focus', 'blur'].forEach(evt => {
+                slider.addEventListener(evt, function (e) {
+                    console.log(`[SLIDER DEBUG] event: ${evt}, value: ${this.value}, focused: ${document.activeElement === this}`);
+                });
+            });
+
+            // debug: log keyboard events on document to see if they reach slider
+            document.addEventListener('keydown', function (e) {
+                if (['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) {
+                    console.log(`[SLIDER DEBUG] document keydown: ${e.key}, activeElement:`, document.activeElement?.tagName, document.activeElement?.id);
+                }
+            });
+
             // slider → input (covers drag AND arrow keys natively)
             slider.addEventListener('input', function () {
                 input.value = this.value;
@@ -345,6 +362,7 @@ mainTrialList.forEach((trial, index) => {
 
             // input → slider (mark as interacted for require_movement)
             input.addEventListener('input', function () {
+                console.log('[SLIDER DEBUG] number input changed to:', this.value);
                 let val = parseInt(this.value, 10);
                 if (isNaN(val)) return;
                 val = Math.max(0, Math.min(100, val));
