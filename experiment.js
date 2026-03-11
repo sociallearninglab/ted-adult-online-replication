@@ -329,15 +329,23 @@ mainTrialList.forEach((trial, index) => {
                 input.value = this.value;
             });
 
-            // input → slider
-            input.addEventListener('input', function () {
-                let val = parseInt(this.value, 10);
+            // input → slider (on Enter or blur so you can type freely)
+            function syncInputToSlider() {
+                let val = parseInt(input.value, 10);
                 if (isNaN(val)) return;
                 val = Math.max(0, Math.min(100, val));
                 slider.value = val;
-                this.value = val;
+                input.value = val;
                 slider.dispatchEvent(new Event('input', { bubbles: true }));
                 slider.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            input.addEventListener('change', syncInputToSlider);
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    syncInputToSlider();
+                    input.blur();
+                }
             });
 
             // arrow keys: jsPsych steals focus to BODY, so we intercept at
