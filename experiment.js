@@ -321,7 +321,13 @@ mainTrialList.forEach((trial, index) => {
             input.min = 0;
             input.max = 100;
             input.value = slider.value;
-            input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin: 8px auto 0; padding: 4px 8px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center;';
+            input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin: 8px auto 0; padding: 4px 8px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center; -moz-appearance: textfield; appearance: textfield;';
+            // hide spin buttons in WebKit browsers
+            const style = document.createElement('style');
+            style.textContent = '#slider-value-input::-webkit-inner-spin-button, #slider-value-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }';
+            document.head.appendChild(style);
+            // select all text on click for easy editing
+            input.addEventListener('focus', function () { this.select(); });
             slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
 
             // slider → input (covers drag)
