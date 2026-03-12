@@ -333,6 +333,12 @@ mainTrialList.forEach((trial, index) => {
                 this.select();
             });
             input.addEventListener('focus', function () { this.select(); });
+            // block non-numeric keys (browsers allow 'e' in number inputs for scientific notation)
+            input.addEventListener('keydown', function (e) {
+                const allowed = ['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+                if (allowed.includes(e.key) || (e.key >= '0' && e.key <= '9')) return;
+                e.preventDefault();
+            });
             slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
 
             // slider → input (covers drag)
