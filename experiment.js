@@ -224,6 +224,12 @@ timeline.push({
     data: { trial_type_custom: 'consent' },
     on_finish: function () {
         document.documentElement.requestFullscreen().catch(() => {});
+        // re-enter fullscreen on any user click if we've been kicked out
+        document.addEventListener('click', function () {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        });
     }
 });
 
@@ -319,6 +325,10 @@ timeline.push({
         // store mic data on finish
         const origFinish = jsPsych.getCurrentTrial().on_finish;
         jsPsych.getCurrentTrial().on_finish = function (data) {
+            // re-enter fullscreen (browser exits it for the mic permission prompt)
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
             data.mic_access = micData.mic_access;
             data.peak_volume = Math.round(micData.peak_volume * 1000) / 1000;
             data.time_to_pass_ms = micData.time_to_pass_ms;
