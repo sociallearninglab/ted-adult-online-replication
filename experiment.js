@@ -1,6 +1,6 @@
 // config
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
-const TESTING_MODE = true;       // force a condition for testing
+const TESTING_MODE = false;       // force a condition for testing
 const FORCED_CONDITION = 'diff';  // 'time' or 'diff' — only when TESTING_MODE is true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
