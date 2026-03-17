@@ -1,6 +1,6 @@
 // config
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
-const TESTING_MODE = false;       // force a condition for testing
+const TESTING_MODE = true;       // force a condition for testing
 const FORCED_CONDITION = 'diff';  // 'time' or 'diff' — only when TESTING_MODE is true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
@@ -39,6 +39,7 @@ const conditionConfig = {
         scaleDescription: 'You will use a sliding scale from 0 (easy) to 100 (difficult) to mark your answer.</p><p>You can drag the circle to respond.',
         exampleFinal: 'stim_files/Example_Final_Diff_Screenshot.png',
         exampleInitial: 'stim_files/Example_Initial_Diff_Screenshot.png',
+        afcQuestion: 'Which structure do you think would be <b>more difficult</b> to build?',
     },
     time: {
         taskDescription: 'estimate the <b>time</b> it would take to build each structure from start to finish',
@@ -49,6 +50,7 @@ const conditionConfig = {
         scaleDescription: 'You will use a sliding scale from 0 seconds to 100 seconds to mark your answer.</p><p>You can drag the circle to respond.',
         exampleFinal: 'stim_files/Example_Final_Time_Screenshot.png',
         exampleInitial: 'stim_files/Example_Initial_Time_Screenshot.png',
+        afcQuestion: 'Which structure do you think would take <b>longer</b> to build?',
     }
 };
 
@@ -107,13 +109,19 @@ window.addEventListener('beforeunload', function () {
     navigator.sendBeacon('https://pipe.jspsych.org/api/data/', blob);
 });
 
-// trial list — structures 7-36, each w/ _1 and _2
+// trial list — structures 7-36 (excluding 24, used for 2AFC), each w/ _1 and _2
 const trialPairs = [];
 for (let i = 7; i <= 36; i++) {
+    if (i === 24) continue; // reserved for 2AFC
     trialPairs.push(jsPsych.randomization.shuffle([`${i}_1`, `${i}_2`]));
 }
 const shuffledPairs = jsPsych.randomization.shuffle(trialPairs);
 const mainTrialList = shuffledPairs.flat();
+
+// 2AFC: counterbalance which image appears on left vs right
+const afcLeftIs24_1 = Math.random() < 0.5;
+const afcLeft = afcLeftIs24_1 ? '24_1' : '24_2';
+const afcRight = afcLeftIs24_1 ? '24_2' : '24_1';
 
 // warmups shuffled
 const warmupOrder = jsPsych.randomization.shuffle(['37_1', '37_2']);
@@ -121,6 +129,7 @@ const warmupOrder = jsPsych.randomization.shuffle(['37_1', '37_2']);
 // preload imgs
 const allImages = mainTrialList.map(t => `stim_files/${t}.jpg`)
     .concat(warmupOrder.map(t => `stim_files/${t}.jpg`))
+    .concat(['stim_files/24_1.jpg', 'stim_files/24_2.jpg'])
     .concat([config.exampleFinal, config.exampleInitial, 'src/lab_logo.png']);
 
 // timeline
@@ -216,6 +225,107 @@ timeline.push({
     on_finish: function () {
         document.documentElement.requestFullscreen().catch(() => {});
     }
+});
+
+// microphone test
+timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container" style="text-align: center;">
+            <h2>Microphone Test</h2>
+            <p>Before we begin, we need to check that your microphone is working.</p>
+            <p>When prompted, please <b>allow</b> microphone access, then <b>clap</b> near your device.</p>
+            <div id="mic-test-area" style="margin: 30px auto;">
+                <svg id="mic-icon" width="120" height="120" viewBox="0 0 24 24" fill="none" style="transition: all 0.3s;">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="#ccc" id="mic-body"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-arc"/>
+                    <line x1="12" y1="19" x2="12" y2="23" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-stem"/>
+                    <line x1="8" y1="23" x2="16" y2="23" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-base"/>
+                </svg>
+                <div id="mic-status" style="font-size: 16px; margin-top: 16px; color: #777;">
+                    Waiting for microphone access...
+                </div>
+            </div>
+        </div>
+    `,
+    choices: ['Continue'],
+    data: { trial_type_custom: 'mic_test' },
+    button_html: (choice) => `<button class="jspsych-btn" id="mic-continue-btn" disabled style="opacity: 0.5;">${choice}</button>`,
+    on_load: function () {
+        const micBody = document.getElementById('mic-body');
+        const micArc = document.getElementById('mic-arc');
+        const micStem = document.getElementById('mic-stem');
+        const micBase = document.getElementById('mic-base');
+        const status = document.getElementById('mic-status');
+        const btn = document.getElementById('mic-continue-btn');
+        const micData = { mic_access: false, peak_volume: 0, time_to_pass_ms: null };
+        const startTime = performance.now();
+        const THRESHOLD = 0.15; // volume threshold (0-1) to count as a clap
+        let passed = false;
+        let stream = null;
+
+        function setMicColor(color) {
+            micBody.setAttribute('fill', color);
+            micArc.setAttribute('stroke', color);
+            micStem.setAttribute('stroke', color);
+            micBase.setAttribute('stroke', color);
+        }
+
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
+            stream = s;
+            micData.mic_access = true;
+            status.textContent = 'Microphone active — please clap!';
+            status.style.color = '#2c3e50';
+
+            const audioCtx = new AudioContext();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            source.connect(analyser);
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            function updateMeter() {
+                if (passed) return;
+                analyser.getByteTimeDomainData(dataArray);
+                let maxVal = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    const v = Math.abs(dataArray[i] - 128) / 128;
+                    if (v > maxVal) maxVal = v;
+                }
+                if (maxVal > micData.peak_volume) micData.peak_volume = maxVal;
+
+                if (maxVal >= THRESHOLD) {
+                    passed = true;
+                    micData.time_to_pass_ms = Math.round(performance.now() - startTime);
+                    setMicColor('#27ae60');
+                    status.style.display = 'none';
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    // stop mic
+                    stream.getTracks().forEach(t => t.stop());
+                    audioCtx.close();
+                } else {
+                    requestAnimationFrame(updateMeter);
+                }
+            }
+            requestAnimationFrame(updateMeter);
+        }).catch(function (err) {
+            micData.mic_access = false;
+            micData.mic_error = err.message;
+            status.textContent = 'Microphone access denied. Please allow microphone access and reload the page.';
+            status.style.color = '#b22222';
+        });
+
+        // store mic data on finish
+        const origFinish = jsPsych.getCurrentTrial().on_finish;
+        jsPsych.getCurrentTrial().on_finish = function (data) {
+            data.mic_access = micData.mic_access;
+            data.peak_volume = Math.round(micData.peak_volume * 1000) / 1000;
+            data.time_to_pass_ms = micData.time_to_pass_ms;
+            if (micData.mic_error) data.mic_error = micData.mic_error;
+            if (origFinish) origFinish(data);
+        };
+    },
 });
 
 // instructions
@@ -416,6 +526,29 @@ mainTrialList.forEach((trial, index) => {
             }
         }
     });
+});
+
+// 2AFC: 24_1 vs 24_2
+timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container" style="text-align: center;">
+            <p style="font-size: 18px;">${config.afcQuestion}</p>
+        </div>
+    `,
+    choices: [
+        `<img src="stim_files/${afcLeft}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/${afcRight}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+    ],
+    button_html: (choice) => `<button class="jspsych-btn" style="padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer; transition: border-color 0.2s;">${choice}</button>`,
+    data: {
+        trial_type_custom: '2afc',
+        afc_left: afcLeft,
+        afc_right: afcRight,
+    },
+    on_finish: function (data) {
+        data.afc_chosen = data.response === 0 ? afcLeft : afcRight;
+    },
 });
 
 // demographics (optional)
