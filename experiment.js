@@ -259,7 +259,7 @@ timeline.push({
         const btn = document.getElementById('mic-continue-btn');
         const micData = { mic_access: false, peak_volume: 0, time_to_pass_ms: null };
         const startTime = performance.now();
-        const THRESHOLD = 0.15;
+        const THRESHOLD = 0.4;
         let passed = false;
         let stream = null;
 
