@@ -1,12 +1,15 @@
-// config
+// adult online replication of block-building complexity judgments (ted study)
+// between-subjs: 'diff' (difficulty) vs 'time' (build time estimation)
+// slider ratings on 28 structures + 2 two-alt forced choice trials
+// data saved via datapipe, recruited on prolific, captcha via turnstile
+
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
-const TESTING_MODE = false;       // force a condition for testing
-const FORCED_CONDITION = 'diff';  // 'time' or 'diff' — only when TESTING_MODE is true
+const TESTING_MODE = false;
+const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
 const PROLIFIC_REDIRECT_URL = 'https://app.prolific.com/submissions/complete?cc=CHIH3VVF';
 
-// condition assignment
 const urlParams = new URLSearchParams(window.location.search);
 let condition;
 
@@ -18,17 +21,14 @@ if (TESTING_MODE) {
     condition = Math.random() < 0.5 ? 'time' : 'diff';
 }
 
-// put condition in url
 const newUrl = new URL(window.location);
 newUrl.searchParams.set('condition', condition);
 window.history.replaceState({}, '', newUrl);
 
-// prolific url params
 const prolific_pid = urlParams.get('PROLIFIC_PID') || '';
 const study_id = urlParams.get('STUDY_ID') || '';
 const session_id = urlParams.get('SESSION_ID') || '';
 
-// condition-specific wording
 const conditionConfig = {
     diff: {
         taskDescription: 'judge how <b>difficult</b> it would be to build each structure from start to finish',
@@ -56,13 +56,11 @@ const conditionConfig = {
 
 const config = conditionConfig[condition];
 
-// init jspsych
 const jsPsych = initJsPsych({
     show_progress_bar: true,
     auto_update_progress_bar: false,
     on_finish: function () {
         saveAllData();
-        // redirect to prolific
         window.location.href = PROLIFIC_REDIRECT_URL;
     }
 });
@@ -70,7 +68,6 @@ const jsPsych = initJsPsych({
 const subject_id = jsPsych.randomization.randomID(10);
 const filename = `${subject_id}.csv`;
 
-// attach to all rows
 jsPsych.data.addProperties({
     subject_id: subject_id,
     condition: condition,
@@ -79,7 +76,6 @@ jsPsych.data.addProperties({
     session_id: session_id,
 });
 
-// data saving
 let saveCount = 0;
 
 function saveAllData() {
@@ -97,7 +93,7 @@ function saveAllData() {
     });
 }
 
-// backup save on tab close
+// backup save on tab close via sendbeacon
 window.addEventListener('beforeunload', function () {
     saveCount++;
     const data = jsPsych.data.get().csv();
@@ -109,16 +105,16 @@ window.addEventListener('beforeunload', function () {
     navigator.sendBeacon('https://pipe.jspsych.org/api/data/', blob);
 });
 
-// trial list — structures 7-36 (excluding 24, used for 2AFC), each w/ _1 and _2
+// structs 7-36 (excl 10 & 24, reserved for 2afc), each w/ _1 and _2
 const trialPairs = [];
 for (let i = 7; i <= 36; i++) {
-    if (i === 10 || i === 24) continue; // reserved for 2AFC
+    if (i === 10 || i === 24) continue;
     trialPairs.push(jsPsych.randomization.shuffle([`${i}_1`, `${i}_2`]));
 }
 const shuffledPairs = jsPsych.randomization.shuffle(trialPairs);
 const mainTrialList = shuffledPairs.flat();
 
-// 2AFC: counterbalance which image appears on left vs right
+// 2afc counterbalancing (left/right + order)
 const afcLeftIs24_1 = Math.random() < 0.5;
 const afc24Left = afcLeftIs24_1 ? '24_1' : '24_2';
 const afc24Right = afcLeftIs24_1 ? '24_2' : '24_1';
@@ -127,10 +123,8 @@ const afcLeftIs10_1 = Math.random() < 0.5;
 const afc10Left = afcLeftIs10_1 ? '10_1' : '10_2';
 const afc10Right = afcLeftIs10_1 ? '10_2' : '10_1';
 
-// counterbalance order of 2AFC trials (10 first vs 24 first)
 const afc10First = Math.random() < 0.5;
 
-// warmups shuffled
 const warmupOrder = jsPsych.randomization.shuffle(['37_1', '37_2']);
 
 jsPsych.data.addProperties({
@@ -140,22 +134,18 @@ jsPsych.data.addProperties({
     warmup_first: warmupOrder[0],
 });
 
-// preload imgs
 const allImages = mainTrialList.map(t => `stim_files/${t}.jpg`)
     .concat(warmupOrder.map(t => `stim_files/${t}.jpg`))
     .concat(['stim_files/10_1.jpg', 'stim_files/10_2.jpg', 'stim_files/24_1.jpg', 'stim_files/24_2.jpg'])
     .concat([config.exampleFinal, config.exampleInitial, 'src/lab_logo.png']);
 
-// timeline
 const timeline = [];
 
-// preload imgs
 timeline.push({
     type: jsPsychPreload,
     images: allImages,
 });
 
-// captcha
 const captcha_data = {};
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
@@ -221,7 +211,6 @@ timeline.push({
     data: { trial_type_custom: 'captcha' },
 });
 
-// consent
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -238,7 +227,6 @@ timeline.push({
     data: { trial_type_custom: 'consent' },
 });
 
-// microphone test
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -271,7 +259,7 @@ timeline.push({
         const btn = document.getElementById('mic-continue-btn');
         const micData = { mic_access: false, peak_volume: 0, time_to_pass_ms: null };
         const startTime = performance.now();
-        const THRESHOLD = 0.15; // volume threshold (0-1) to count as a clap
+        const THRESHOLD = 0.15;
         let passed = false;
         let stream = null;
 
@@ -312,7 +300,6 @@ timeline.push({
                     status.style.display = 'none';
                     btn.disabled = false;
                     btn.style.opacity = '1';
-                    // stop mic
                     stream.getTracks().forEach(t => t.stop());
                     audioCtx.close();
                 } else {
@@ -327,13 +314,10 @@ timeline.push({
             status.style.color = '#b22222';
         });
 
-        // store mic data on finish
         const origFinish = jsPsych.getCurrentTrial().on_finish;
         jsPsych.getCurrentTrial().on_finish = function (data) {
-            // enter fullscreen after mic test (doing it here avoids the browser
-            // kicking us out when the getUserMedia permission prompt appears)
+            // fullscreen after mic test (avoids browser exiting fs on permission prompt)
             document.documentElement.requestFullscreen().catch(() => {});
-            // re-enter fullscreen on any user click if we get kicked out
             document.addEventListener('click', function () {
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(() => {});
@@ -348,7 +332,6 @@ timeline.push({
     },
 });
 
-// instructions
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -362,7 +345,6 @@ timeline.push({
     data: { trial_type_custom: 'instructions' },
 });
 
-// scale explanation
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -376,7 +358,6 @@ timeline.push({
     data: { trial_type_custom: 'example_intro' },
 });
 
-// partial-start note
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -389,7 +370,6 @@ timeline.push({
     data: { trial_type_custom: 'example_init' },
 });
 
-// warmups
 warmupOrder.forEach(trial => {
     const isEasy = trial === '37_1';
     timeline.push({
@@ -405,7 +385,6 @@ warmupOrder.forEach(trial => {
     });
 });
 
-// transition to main trials
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -418,7 +397,6 @@ timeline.push({
     data: { trial_type_custom: 'begin_main' },
 });
 
-// main trials
 const totalMainTrials = mainTrialList.length;
 let trialsSinceLastSave = 0;
 
@@ -444,7 +422,6 @@ mainTrialList.forEach((trial, index) => {
             const slider = document.getElementById('jspsych-html-slider-response-response');
             const suffix = condition === 'time' ? 's' : '';
 
-            // editable number input synced with slider
             const input = document.createElement('input');
             input.type = 'number';
             input.id = 'slider-value-input';
@@ -452,18 +429,15 @@ mainTrialList.forEach((trial, index) => {
             input.max = 100;
             input.value = slider.value;
             input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin: 16px auto 0; padding: 12px 16px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center; -moz-appearance: textfield; appearance: textfield; position: relative; z-index: 10; cursor: text;';
-            // hide spin buttons in WebKit browsers
             const style = document.createElement('style');
             style.textContent = '#slider-value-input::-webkit-inner-spin-button, #slider-value-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }';
             document.head.appendChild(style);
-            // select all text on click for easy editing
             input.addEventListener('mousedown', function (e) {
-                e.preventDefault();          // prevent caret placement
+                e.preventDefault();
                 this.focus();
                 this.select();
             });
             input.addEventListener('focus', function () { this.select(); });
-            // block non-numeric keys (browsers allow 'e' in number inputs for scientific notation)
             input.addEventListener('keydown', function (e) {
                 const allowed = ['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
                 if (allowed.includes(e.key) || (e.key >= '0' && e.key <= '9')) return;
@@ -471,12 +445,10 @@ mainTrialList.forEach((trial, index) => {
             });
             slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
 
-            // slider → input (covers drag)
             slider.addEventListener('input', function () {
                 input.value = this.value;
             });
 
-            // input → slider (on Enter or blur so you can type freely)
             function syncInputToSlider() {
                 let val = parseInt(input.value, 10);
                 if (isNaN(val)) return;
@@ -495,13 +467,11 @@ mainTrialList.forEach((trial, index) => {
                 }
             });
 
-            // arrow keys: jsPsych steals focus to BODY, so we intercept at
-            // capture phase on document and programmatically update the slider
+            // intercept arrow keys at capture phase (jspsych steals focus to body)
             if (_currentArrowHandler) {
                 document.removeEventListener('keydown', _currentArrowHandler, true);
             }
             _currentArrowHandler = function (e) {
-                // typing a digit anywhere on the page focuses the input
                 if (document.activeElement !== input && e.key >= '0' && e.key <= '9') {
                     e.preventDefault();
                     input.value = '';
@@ -530,7 +500,6 @@ mainTrialList.forEach((trial, index) => {
             trial_number: index + 1,
         },
         on_finish: function () {
-            // clean up arrow key handler
             if (_currentArrowHandler) {
                 document.removeEventListener('keydown', _currentArrowHandler, true);
                 _currentArrowHandler = null;
@@ -538,7 +507,6 @@ mainTrialList.forEach((trial, index) => {
 
             jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
 
-            // save every 10
             trialsSinceLastSave++;
             if (trialsSinceLastSave >= 10) {
                 saveAllData();
@@ -548,7 +516,6 @@ mainTrialList.forEach((trial, index) => {
     });
 });
 
-// 2AFC trials: 10_1 vs 10_2 and 24_1 vs 24_2 (order counterbalanced)
 const afc24Trial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -605,7 +572,6 @@ if (afc10First) {
     timeline.push(afc10Trial);
 }
 
-// demographics (optional)
 timeline.push({
     type: jsPsychSurveyHtmlForm,
     preamble: '<p>Finally, we have a few demographic questions for you.</p>',
@@ -646,7 +612,6 @@ timeline.push({
     data: { trial_type_custom: 'demographics' },
 });
 
-// end screen
 timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -662,5 +627,4 @@ timeline.push({
     }
 });
 
-// run
 jsPsych.run(timeline);

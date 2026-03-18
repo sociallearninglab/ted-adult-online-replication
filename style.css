@@ -1,9 +1,7 @@
-/* Override jsPsych content wrapper font-size */
 .jspsych-content {
     font-size: 100%;
 }
 
-/* Base typography */
 .jspsych-display-element {
     font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 17px;
@@ -11,7 +9,6 @@
     color: #2c3e50;
 }
 
-/* Content containers — wider text blocks */
 .consent-container,
 .instruction-container,
 .trial-container {
@@ -25,7 +22,6 @@
     margin-bottom: 14px;
 }
 
-/* Consent page */
 .consent-container {
     background: #fafafa;
     border: 1px solid #e0e0e0;
@@ -37,7 +33,6 @@
     color: #3498db;
 }
 
-/* Buttons */
 .jspsych-btn {
     font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 15px;
@@ -60,7 +55,6 @@
     background-color: #1f6da3;
 }
 
-/* Trial image */
 .trial-image {
     max-width: 600px;
     max-height: 350px;
@@ -69,13 +63,11 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-/* Trial question text */
 .trial-container p {
     font-size: 18px;
     margin-top: 12px;
 }
 
-/* Slider styling */
 .jspsych-slider-response-container {
     margin-top: 50px;
     margin-bottom: 0;
@@ -124,7 +116,6 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Slider number input */
 #slider-value-input::-webkit-outer-spin-button,
 #slider-value-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -135,7 +126,6 @@ input[type="range"]::-moz-range-thumb {
     -moz-appearance: textfield;
 }
 
-/* Progress bar */
 #jspsych-progressbar-container {
     border-bottom: 1px solid #e0e0e0;
     background-color: #f5f5f5;
@@ -152,7 +142,6 @@ input[type="range"]::-moz-range-thumb {
     color: #777;
 }
 
-/* Demographics form */
 .jspsych-survey-html-form .jspsych-survey-html-form-preamble {
     font-size: 19px;
     margin-bottom: 20px;
@@ -177,7 +166,6 @@ input[type="range"]::-moz-range-thumb {
     padding: 6px 8px;
 }
 
-/* Captcha overlay */
 #captcha-container {
     display: none;
     position: fixed;
@@ -214,7 +202,6 @@ input[type="range"]::-moz-range-thumb {
     background-color: #2980b9;
 }
 
-/* End screen */
 .end-container {
     text-align: center;
     max-width: 600px;
