@@ -61,7 +61,6 @@ const jsPsych = initJsPsych({
     auto_update_progress_bar: false,
     on_finish: function () {
         saveAllData();
-        window.location.href = PROLIFIC_REDIRECT_URL;
     }
 });
 
@@ -80,7 +79,7 @@ jsPsych.data.addProperties({
 
 function saveAllData() {
     const data = jsPsych.data.get().csv();
-    fetch('https://pipe.jspsych.org/api/data/', {
+    return fetch('https://pipe.jspsych.org/api/data/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': '*/*' },
         body: JSON.stringify({
@@ -88,6 +87,11 @@ function saveAllData() {
             filename: filename,
             data: data
         })
+    }).then(() => {
+        window.location.href = PROLIFIC_REDIRECT_URL;
+    }).catch(() => {
+        // redirect even if save fails so participant gets credit
+        window.location.href = PROLIFIC_REDIRECT_URL;
     });
 }
 
