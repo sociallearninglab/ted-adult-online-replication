@@ -219,7 +219,7 @@ timeline.push({
             <div style="text-align: center; margin-bottom: 20px;">
                 <img src="src/lab_logo.png" height="80">
             </div>
-            <p>By agreeing to take part in this research, you agree to view and rate a series of block structures. This experiment will take approximately X minutes to complete.</p>
+            <p>By agreeing to take part in this research, you agree to view and rate a series of block structures. This experiment will take approximately 10 minutes to complete.</p>
             <p>By answering the following questions, you are participating in a study being performed by cognitive scientists in the Stanford Department of Psychology. If you have questions about this research, please contact us at <a href="mailto:sociallearninglab@stanford.edu">sociallearninglab@stanford.edu</a>.</p>
             <p>You must be at least 18 years old to participate. Your participation in this research is voluntary. You may decline to answer any or all of the following questions. You may decline further participation, at any time, without adverse consequences. Your anonymity is assured; the researchers who have requested your participation will not receive any personal information about you.</p>
         </div>
