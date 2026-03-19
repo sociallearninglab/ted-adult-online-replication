@@ -8,7 +8,7 @@ const TESTING_MODE = false;
 const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
-const PROLIFIC_REDIRECT_URL = 'https://app.prolific.com/submissions/complete?cc=CHIH3VVF';
+const PROLIFIC_REDIRECT_URL = 'https://app.prolific.com/submissions/complete?cc=CM05DVAH';
 
 const urlParams = new URLSearchParams(window.location.search);
 let condition;
