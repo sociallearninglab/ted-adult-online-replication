@@ -66,7 +66,9 @@ const jsPsych = initJsPsych({
 });
 
 const subject_id = jsPsych.randomization.randomID(10);
-const filename = `${subject_id}.csv`;
+const startTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+const pid = prolific_pid || subject_id;
+const filename = `${pid}_${startTimestamp}.csv`;
 
 jsPsych.data.addProperties({
     subject_id: subject_id,
@@ -76,18 +78,14 @@ jsPsych.data.addProperties({
     session_id: session_id,
 });
 
-let saveCount = 0;
-
 function saveAllData() {
-    saveCount++;
     const data = jsPsych.data.get().csv();
-    const saveName = saveCount === 1 ? filename : `${subject_id}_${saveCount}.csv`;
     fetch('https://pipe.jspsych.org/api/data/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': '*/*' },
         body: JSON.stringify({
             experimentID: DATAPIPE_EXPERIMENT_ID,
-            filename: saveName,
+            filename: filename,
             data: data
         })
     });
@@ -95,11 +93,10 @@ function saveAllData() {
 
 // backup save on tab close via sendbeacon
 window.addEventListener('beforeunload', function () {
-    saveCount++;
     const data = jsPsych.data.get().csv();
     const blob = new Blob([JSON.stringify({
         experimentID: DATAPIPE_EXPERIMENT_ID,
-        filename: `${subject_id}_${saveCount}.csv`,
+        filename: filename,
         data: data
     })], { type: 'application/json' });
     navigator.sendBeacon('https://pipe.jspsych.org/api/data/', blob);
@@ -398,7 +395,6 @@ timeline.push({
 });
 
 const totalMainTrials = mainTrialList.length;
-let trialsSinceLastSave = 0;
 
 let _currentArrowHandler = null;
 
@@ -506,12 +502,6 @@ mainTrialList.forEach((trial, index) => {
             }
 
             jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
-
-            trialsSinceLastSave++;
-            if (trialsSinceLastSave >= 10) {
-                saveAllData();
-                trialsSinceLastSave = 0;
-            }
         }
     });
 });
@@ -622,9 +612,6 @@ timeline.push({
     `,
     choices: ['Complete'],
     data: { trial_type_custom: 'end' },
-    on_load: function () {
-        saveAllData();
-    }
 });
 
 jsPsych.run(timeline);
