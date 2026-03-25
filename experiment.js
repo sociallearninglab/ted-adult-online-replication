@@ -339,7 +339,7 @@ mainTrialList.forEach((trial, index) => {
                 const status = document.getElementById('mic-status');
                 const btn = document.getElementById('mic-continue-btn');
                 const micData = { mic_access: false, peak_volume: 0, time_to_pass_ms: null, blocks_audio: null };
-                const THRESHOLD = 0.15;
+                const THRESHOLD = 0.3;
                 let passed = false;
                 let stream = null;
                 let audioReady = false;
@@ -426,7 +426,7 @@ mainTrialList.forEach((trial, index) => {
                     data.mic_access = micData.mic_access;
                     data.peak_volume = Math.round(micData.peak_volume * 1000) / 1000;
                     data.time_to_pass_ms = micData.time_to_pass_ms;
-                    data.blocks_audio = micData.blocks_audio;
+                    // data.blocks_audio = micData.blocks_audio;
                     if (micData.mic_error) data.mic_error = micData.mic_error;
                     if (origFinish) origFinish(data);
                 };
