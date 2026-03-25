@@ -142,15 +142,15 @@ const allImages = mainTrialList.map(t => `stim_files/${t}.jpg`)
     .concat(['stim_files/10_1.jpg', 'stim_files/10_2.jpg', 'stim_files/24_1.jpg', 'stim_files/24_2.jpg'])
     .concat([config.exampleFinal, config.exampleInitial, 'src/lab_logo.png']);
 
-const timeline = [];
+// --- trial definitions ---
 
-timeline.push({
+const preloadTrial = {
     type: jsPsychPreload,
     images: allImages,
-});
+};
 
 const captcha_data = {};
-timeline.push({
+const captchaTrial = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: '',
     on_load: function () {
@@ -212,9 +212,9 @@ timeline.push({
         };
     },
     data: { trial_type_custom: 'captcha' },
-});
+};
 
-timeline.push({
+const consentTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="consent-container">
@@ -228,9 +228,9 @@ timeline.push({
     `,
     choices: ['I AGREE'],
     data: { trial_type_custom: 'consent' },
-});
+};
 
-timeline.push({
+const micTestTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container" style="text-align: center;">
@@ -356,9 +356,9 @@ timeline.push({
             if (origFinish) origFinish(data);
         };
     },
-});
+};
 
-timeline.push({
+const instructionsTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container">
@@ -369,9 +369,9 @@ timeline.push({
     `,
     choices: ['Start'],
     data: { trial_type_custom: 'instructions' },
-});
+};
 
-timeline.push({
+const exampleIntroTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container" style="text-align: center;">
@@ -382,9 +382,9 @@ timeline.push({
     `,
     choices: ['Next'],
     data: { trial_type_custom: 'example_intro' },
-});
+};
 
-timeline.push({
+const exampleInitTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container" style="text-align: center;">
@@ -394,11 +394,11 @@ timeline.push({
     `,
     choices: ['Next'],
     data: { trial_type_custom: 'example_init' },
-});
+};
 
-warmupOrder.forEach(trial => {
+const warmupTrials = warmupOrder.map(trial => {
     const isEasy = trial === '37_1';
-    timeline.push({
+    return {
         type: jsPsychHtmlButtonResponse,
         stimulus: `
             <div class="trial-container" style="text-align: center;">
@@ -408,10 +408,10 @@ warmupOrder.forEach(trial => {
         `,
         choices: ['Next'],
         data: { trial_type_custom: 'warmup', stimulus_id: trial },
-    });
+    };
 });
 
-timeline.push({
+const beginMainTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container" style="text-align: center;">
@@ -421,119 +421,116 @@ timeline.push({
     `,
     choices: ['Continue'],
     data: { trial_type_custom: 'begin_main' },
-});
+};
 
 const totalMainTrials = mainTrialList.length;
-
 let _currentArrowHandler = null;
 
-mainTrialList.forEach((trial, index) => {
-    timeline.push({
-        type: jsPsychHtmlSliderResponse,
-        stimulus: `
-            <div class="trial-container" style="text-align: center;">
-                <img src="stim_files/${trial}.jpg" class="trial-image">
-                <p>${config.trialQuestion}</p>
-            </div>
-        `,
-        labels: config.sliderLabels,
-        min: 0,
-        max: 100,
-        slider_start: 50,
-        require_movement: true,
-        slider_width: 500,
-        button_label: 'Continue',
-        on_load: function () {
-            const slider = document.getElementById('jspsych-html-slider-response-response');
-            const suffix = condition === 'time' ? 's' : '';
+const mainTrials = mainTrialList.map((trial, index) => ({
+    type: jsPsychHtmlSliderResponse,
+    stimulus: `
+        <div class="trial-container" style="text-align: center;">
+            <img src="stim_files/${trial}.jpg" class="trial-image">
+            <p>${config.trialQuestion}</p>
+        </div>
+    `,
+    labels: config.sliderLabels,
+    min: 0,
+    max: 100,
+    slider_start: 50,
+    require_movement: true,
+    slider_width: 500,
+    button_label: 'Continue',
+    on_load: function () {
+        const slider = document.getElementById('jspsych-html-slider-response-response');
+        const suffix = condition === 'time' ? 's' : '';
 
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.id = 'slider-value-input';
-            input.min = 0;
-            input.max = 100;
-            input.value = slider.value;
-            input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin: 16px auto 0; padding: 12px 16px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center; -moz-appearance: textfield; appearance: textfield; position: relative; z-index: 10; cursor: text;';
-            const style = document.createElement('style');
-            style.textContent = '#slider-value-input::-webkit-inner-spin-button, #slider-value-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }';
-            document.head.appendChild(style);
-            input.addEventListener('mousedown', function (e) {
-                e.preventDefault();
-                this.focus();
-                this.select();
-            });
-            input.addEventListener('focus', function () { this.select(); });
-            input.addEventListener('keydown', function (e) {
-                const allowed = ['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-                if (allowed.includes(e.key) || (e.key >= '0' && e.key <= '9')) return;
-                e.preventDefault();
-            });
-            slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = 'slider-value-input';
+        input.min = 0;
+        input.max = 100;
+        input.value = slider.value;
+        input.style.cssText = 'font-size: 18px; font-weight: 600; color: #2c3e50; display: block; margin: 16px auto 0; padding: 12px 16px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; width: 80px; text-align: center; -moz-appearance: textfield; appearance: textfield; position: relative; z-index: 10; cursor: text;';
+        const style = document.createElement('style');
+        style.textContent = '#slider-value-input::-webkit-inner-spin-button, #slider-value-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }';
+        document.head.appendChild(style);
+        input.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            this.focus();
+            this.select();
+        });
+        input.addEventListener('focus', function () { this.select(); });
+        input.addEventListener('keydown', function (e) {
+            const allowed = ['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+            if (allowed.includes(e.key) || (e.key >= '0' && e.key <= '9')) return;
+            e.preventDefault();
+        });
+        slider.parentNode.insertBefore(input, slider.nextSibling.nextSibling);
 
-            slider.addEventListener('input', function () {
-                input.value = this.value;
-            });
+        slider.addEventListener('input', function () {
+            input.value = this.value;
+        });
 
-            function syncInputToSlider() {
-                let val = parseInt(input.value, 10);
-                if (isNaN(val)) return;
-                val = Math.max(0, Math.min(100, val));
-                slider.value = val;
-                input.value = val;
-                slider.dispatchEvent(new Event('input', { bubbles: true }));
-                slider.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-            input.addEventListener('change', syncInputToSlider);
-            input.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    syncInputToSlider();
-                    input.blur();
-                }
-            });
-
-            // intercept arrow keys at capture phase (jspsych steals focus to body)
-            if (_currentArrowHandler) {
-                document.removeEventListener('keydown', _currentArrowHandler, true);
-            }
-            _currentArrowHandler = function (e) {
-                if (document.activeElement !== input && e.key >= '0' && e.key <= '9') {
-                    e.preventDefault();
-                    input.value = '';
-                    input.focus();
-                    input.value = e.key;
-                    return;
-                }
-                if (document.activeElement === input) return;
-                if (!['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-                let val = parseInt(slider.value, 10);
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') val = Math.max(0, val - 1);
-                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') val = Math.min(100, val + 1);
-                slider.value = val;
-                input.value = val;
-                slider.dispatchEvent(new Event('input', { bubbles: true }));
-                slider.dispatchEvent(new Event('change', { bubbles: true }));
-            };
-            document.addEventListener('keydown', _currentArrowHandler, true);
-        },
-        data: {
-            trial_type_custom: 'rating',
-            stimulus_id: trial,
-            trial_number: index + 1,
-        },
-        on_finish: function () {
-            if (_currentArrowHandler) {
-                document.removeEventListener('keydown', _currentArrowHandler, true);
-                _currentArrowHandler = null;
-            }
-
-            jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
+        function syncInputToSlider() {
+            let val = parseInt(input.value, 10);
+            if (isNaN(val)) return;
+            val = Math.max(0, Math.min(100, val));
+            slider.value = val;
+            input.value = val;
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
+            slider.dispatchEvent(new Event('change', { bubbles: true }));
         }
-    });
-});
+        input.addEventListener('change', syncInputToSlider);
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                syncInputToSlider();
+                input.blur();
+            }
+        });
+
+        // intercept arrow keys at capture phase (jspsych steals focus to body)
+        if (_currentArrowHandler) {
+            document.removeEventListener('keydown', _currentArrowHandler, true);
+        }
+        _currentArrowHandler = function (e) {
+            if (document.activeElement !== input && e.key >= '0' && e.key <= '9') {
+                e.preventDefault();
+                input.value = '';
+                input.focus();
+                input.value = e.key;
+                return;
+            }
+            if (document.activeElement === input) return;
+            if (!['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(e.key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            let val = parseInt(slider.value, 10);
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') val = Math.max(0, val - 1);
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') val = Math.min(100, val + 1);
+            slider.value = val;
+            input.value = val;
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
+            slider.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        document.addEventListener('keydown', _currentArrowHandler, true);
+    },
+    data: {
+        trial_type_custom: 'rating',
+        stimulus_id: trial,
+        trial_number: index + 1,
+    },
+    on_finish: function () {
+        if (_currentArrowHandler) {
+            document.removeEventListener('keydown', _currentArrowHandler, true);
+            _currentArrowHandler = null;
+        }
+
+        jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
+    }
+}));
 
 const afc24Trial = {
     type: jsPsychHtmlButtonResponse,
@@ -583,15 +580,9 @@ const afc10Trial = {
     },
 };
 
-if (afc10First) {
-    timeline.push(afc10Trial);
-    timeline.push(afc24Trial);
-} else {
-    timeline.push(afc24Trial);
-    timeline.push(afc10Trial);
-}
+const afcTrials = afc10First ? [afc10Trial, afc24Trial] : [afc24Trial, afc10Trial];
 
-timeline.push({
+const strategyTrial = {
     type: jsPsychSurveyHtmlForm,
     html: `
         <p>In a few words, please describe the strategy you used to make your responses.</p>
@@ -600,9 +591,9 @@ timeline.push({
     `,
     button_label: 'Submit',
     data: { trial_type_custom: 'strategy_free_resp' },
-});
+};
 
-timeline.push({
+const demographicsTrial = {
     type: jsPsychSurveyHtmlForm,
     preamble: '<p>Finally, we have a few demographic questions for you.</p>',
     html: `
@@ -640,9 +631,9 @@ timeline.push({
     `,
     button_label: 'Submit',
     data: { trial_type_custom: 'demographics' },
-});
+};
 
-timeline.push({
+const endTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="end-container">
@@ -652,6 +643,25 @@ timeline.push({
     `,
     choices: ['Complete'],
     data: { trial_type_custom: 'end' },
-});
+};
+
+// timeline
+
+const timeline = [
+    preloadTrial,
+    captchaTrial,
+    consentTrial,
+    micTestTrial,
+    instructionsTrial,
+    exampleIntroTrial,
+    exampleInitTrial,
+    ...warmupTrials,
+    beginMainTrial,
+    ...mainTrials,
+    ...afcTrials,
+    strategyTrial,
+    demographicsTrial,
+    endTrial,
+];
 
 jsPsych.run(timeline);
