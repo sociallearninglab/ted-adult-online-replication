@@ -228,110 +228,13 @@ timeline.push({
     `,
     choices: ['I AGREE'],
     data: { trial_type_custom: 'consent' },
-});
-
-timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: `
-        <div class="instruction-container" style="text-align: center;">
-            <h2>Microphone Test</h2>
-            <p>Before we begin, we need to check that your microphone is working.</p>
-            <p>When prompted, please <b>allow</b> microphone access, then <b>clap</b> near your device.</p>
-            <div id="mic-test-area" style="margin: 30px auto;">
-                <svg id="mic-icon" width="120" height="120" viewBox="0 0 24 24" fill="none" style="transition: all 0.3s;">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="#ccc" id="mic-body"/>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-arc"/>
-                    <line x1="12" y1="19" x2="12" y2="23" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-stem"/>
-                    <line x1="8" y1="23" x2="16" y2="23" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-base"/>
-                </svg>
-                <div id="mic-status" style="font-size: 16px; margin-top: 16px; color: #777;">
-                    Waiting for microphone access...
-                </div>
-            </div>
-        </div>
-    `,
-    choices: ['Continue'],
-    data: { trial_type_custom: 'mic_test' },
-    button_html: (choice) => `<button class="jspsych-btn" id="mic-continue-btn" disabled style="opacity: 0.5;">${choice}</button>`,
-    on_load: function () {
-        const micBody = document.getElementById('mic-body');
-        const micArc = document.getElementById('mic-arc');
-        const micStem = document.getElementById('mic-stem');
-        const micBase = document.getElementById('mic-base');
-        const status = document.getElementById('mic-status');
-        const btn = document.getElementById('mic-continue-btn');
-        const micData = { mic_access: false, peak_volume: 0, time_to_pass_ms: null };
-        const startTime = performance.now();
-        const THRESHOLD = 0.4;
-        let passed = false;
-        let stream = null;
-
-        function setMicColor(color) {
-            micBody.setAttribute('fill', color);
-            micArc.setAttribute('stroke', color);
-            micStem.setAttribute('stroke', color);
-            micBase.setAttribute('stroke', color);
-        }
-
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
-            stream = s;
-            micData.mic_access = true;
-            status.textContent = 'Microphone active — please clap!';
-            status.style.color = '#2c3e50';
-
-            const audioCtx = new AudioContext();
-            const source = audioCtx.createMediaStreamSource(stream);
-            const analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 512;
-            source.connect(analyser);
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-            function updateMeter() {
-                if (passed) return;
-                analyser.getByteTimeDomainData(dataArray);
-                let maxVal = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                    const v = Math.abs(dataArray[i] - 128) / 128;
-                    if (v > maxVal) maxVal = v;
-                }
-                if (maxVal > micData.peak_volume) micData.peak_volume = maxVal;
-
-                if (maxVal >= THRESHOLD) {
-                    passed = true;
-                    micData.time_to_pass_ms = Math.round(performance.now() - startTime);
-                    setMicColor('#27ae60');
-                    status.style.display = 'none';
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                    stream.getTracks().forEach(t => t.stop());
-                    audioCtx.close();
-                } else {
-                    requestAnimationFrame(updateMeter);
-                }
+    on_finish: function () {
+        document.documentElement.requestFullscreen().catch(() => {});
+        document.addEventListener('click', function () {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
             }
-            requestAnimationFrame(updateMeter);
-        }).catch(function (err) {
-            micData.mic_access = false;
-            micData.mic_error = err.message;
-            status.textContent = 'Microphone access denied. Please allow microphone access and reload the page.';
-            status.style.color = '#b22222';
         });
-
-        const origFinish = jsPsych.getCurrentTrial().on_finish;
-        jsPsych.getCurrentTrial().on_finish = function (data) {
-            // fullscreen after mic test (avoids browser exiting fs on permission prompt)
-            document.documentElement.requestFullscreen().catch(() => {});
-            document.addEventListener('click', function () {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(() => {});
-                }
-            });
-            data.mic_access = micData.mic_access;
-            data.peak_volume = Math.round(micData.peak_volume * 1000) / 1000;
-            data.time_to_pass_ms = micData.time_to_pass_ms;
-            if (micData.mic_error) data.mic_error = micData.mic_error;
-            if (origFinish) origFinish(data);
-        };
     },
 });
 
@@ -405,6 +308,132 @@ const totalMainTrials = mainTrialList.length;
 let _currentArrowHandler = null;
 
 mainTrialList.forEach((trial, index) => {
+    // mic check b/w trials 25 and 26
+    if (index === 25) {
+        timeline.push({
+            type: jsPsychHtmlButtonResponse,
+            stimulus: `
+                <div class="instruction-container" style="text-align: center;">
+                    <p>Please say the word <b>"blocks"</b> out loud.</p>
+                    <div id="mic-test-area" style="margin: 30px auto;">
+                        <svg id="mic-icon" width="120" height="120" viewBox="0 0 24 24" fill="none" style="transition: all 0.3s;">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="#ccc" id="mic-body"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-arc"/>
+                            <line x1="12" y1="19" x2="12" y2="23" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-stem"/>
+                            <line x1="8" y1="23" x2="16" y2="23" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" id="mic-base"/>
+                        </svg>
+                        <div id="mic-status" style="font-size: 16px; margin-top: 16px; color: #777;">
+                            Waiting for microphone access...
+                        </div>
+                    </div>
+                </div>
+            `,
+            choices: ['Continue'],
+            data: { trial_type_custom: 'mic_test' },
+            button_html: (choice) => `<button class="jspsych-btn" id="mic-continue-btn" disabled style="opacity: 0.5;">${choice}</button>`,
+            on_load: function () {
+                const micBody = document.getElementById('mic-body');
+                const micArc = document.getElementById('mic-arc');
+                const micStem = document.getElementById('mic-stem');
+                const micBase = document.getElementById('mic-base');
+                const status = document.getElementById('mic-status');
+                const btn = document.getElementById('mic-continue-btn');
+                const micData = { mic_access: false, peak_volume: 0, time_to_pass_ms: null, blocks_audio: null };
+                const THRESHOLD = 0.15;
+                let passed = false;
+                let stream = null;
+                let audioReady = false;
+
+                function setMicColor(color) {
+                    micBody.setAttribute('fill', color);
+                    micArc.setAttribute('stroke', color);
+                    micStem.setAttribute('stroke', color);
+                    micBase.setAttribute('stroke', color);
+                }
+
+                function enableIfReady() {
+                    if (passed && audioReady) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }
+                }
+
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
+                    stream = s;
+                    micData.mic_access = true;
+                    const startTime = performance.now();
+                    status.textContent = 'Listening — say "blocks"';
+                    status.style.color = '#2c3e50';
+
+                    const audioCtx = new AudioContext();
+                    const source = audioCtx.createMediaStreamSource(stream);
+                    const analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 512;
+                    source.connect(analyser);
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                    // record audio for base64 capture
+                    const mediaRecorder = new MediaRecorder(stream);
+                    const audioChunks = [];
+                    mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            micData.blocks_audio = reader.result.split(',')[1];
+                            audioReady = true;
+                            enableIfReady();
+                        };
+                        reader.readAsDataURL(blob);
+                    };
+                    mediaRecorder.start();
+
+                    function updateMeter() {
+                        if (passed) return;
+                        analyser.getByteTimeDomainData(dataArray);
+                        let maxVal = 0;
+                        for (let i = 0; i < dataArray.length; i++) {
+                            const v = Math.abs(dataArray[i] - 128) / 128;
+                            if (v > maxVal) maxVal = v;
+                        }
+                        if (maxVal > micData.peak_volume) micData.peak_volume = maxVal;
+
+                        if (maxVal >= THRESHOLD) {
+                            passed = true;
+                            micData.time_to_pass_ms = Math.round(performance.now() - startTime);
+                            setMicColor('#27ae60');
+                            status.style.display = 'none';
+                            // keep recording 1s to capture full word
+                            setTimeout(() => {
+                                mediaRecorder.stop();
+                                stream.getTracks().forEach(t => t.stop());
+                                audioCtx.close();
+                            }, 1000);
+                        } else {
+                            requestAnimationFrame(updateMeter);
+                        }
+                    }
+                    requestAnimationFrame(updateMeter);
+                }).catch(function (err) {
+                    micData.mic_access = false;
+                    micData.mic_error = err.message;
+                    status.textContent = 'Microphone access denied. Please allow microphone access and reload the page.';
+                    status.style.color = '#b22222';
+                });
+
+                const origFinish = jsPsych.getCurrentTrial().on_finish;
+                jsPsych.getCurrentTrial().on_finish = function (data) {
+                    data.mic_access = micData.mic_access;
+                    data.peak_volume = Math.round(micData.peak_volume * 1000) / 1000;
+                    data.time_to_pass_ms = micData.time_to_pass_ms;
+                    data.blocks_audio = micData.blocks_audio;
+                    if (micData.mic_error) data.mic_error = micData.mic_error;
+                    if (origFinish) origFinish(data);
+                };
+            },
+        });
+    }
+
     timeline.push({
         type: jsPsychHtmlSliderResponse,
         stimulus: `
