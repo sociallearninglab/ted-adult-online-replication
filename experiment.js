@@ -5,7 +5,7 @@
 
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
 const TESTING_MODE_1 = false; // force condition for testing
-const TESTING_MODE_2 = false; // skip to end AFC testing
+const TESTING_MODE_2 = true; // skip to end AFC testing
 const TESTING_MODE = TESTING_MODE_1 || TESTING_MODE_2;
 const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
@@ -564,8 +564,8 @@ const afc32Trial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
-        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer; transition: border-color 0.2s;">${choice}</button>`,
     data: {
