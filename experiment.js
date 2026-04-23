@@ -5,7 +5,7 @@
 
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
 const TESTING_MODE_1 = false; // force condition for testing
-const TESTING_MODE_2 = true; // skip to end AFC testing
+const TESTING_MODE_2 = false; // skip to end AFC testing
 const TESTING_MODE = TESTING_MODE_1 || TESTING_MODE_2;
 const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
