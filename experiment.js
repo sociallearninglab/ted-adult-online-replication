@@ -4,7 +4,9 @@
 // data saved via datapipe, recruited on prolific, captcha via turnstile
 
 const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
-const TESTING_MODE = false;
+const TESTING_MODE_1 = false; // force condition for testing
+const TESTING_MODE_2 = false; // skip to end AFC testing
+const TESTING_MODE = TESTING_MODE_1 || TESTING_MODE_2;
 const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
@@ -39,7 +41,7 @@ const conditionConfig = {
         scaleDescription: 'You will use a sliding scale from 0 (easy) to 100 (difficult) to mark your answer.</p><p>You can drag the circle to respond.',
         exampleFinal: 'stim_files/Example_Final_Diff_Screenshot.png',
         exampleInitial: 'stim_files/Example_Initial_Diff_Screenshot.png',
-        afcQuestion: 'Which structure do you think would be <b>more difficult</b> to build?',
+        afcQuestion: 'Which drawing do you think would be <b>more difficult</b> to make?',
     },
     time: {
         taskDescription: 'estimate the <b>time</b> it would take to build each structure from start to finish',
@@ -50,7 +52,7 @@ const conditionConfig = {
         scaleDescription: 'You will use a sliding scale from 0 seconds to 100 seconds to mark your answer.</p><p>You can drag the circle to respond.',
         exampleFinal: 'stim_files/Example_Final_Time_Screenshot.png',
         exampleInitial: 'stim_files/Example_Initial_Time_Screenshot.png',
-        afcQuestion: 'Which structure do you think would take <b>longer</b> to build?',
+        afcQuestion: 'Which drawing do you think would take <b>longer</b> to make?',
     }
 };
 
@@ -108,38 +110,36 @@ window.addEventListener('beforeunload', function () {
     navigator.sendBeacon('https://pipe.jspsych.org/api/data/', blob);
 });
 
-// structs 7-36 (excl 10 & 24, reserved for 2afc), each w/ _1 and _2
+// structs 7-36 (excluding selected trials), each w/ _1 and _2
 const trialPairs = [];
 for (let i = 7; i <= 36; i++) {
-    if (i === 10 || i === 24) continue;
+    if (i === 10 || i === 24 || i === 32 || i === 35 || i === 36) continue;
     trialPairs.push(jsPsych.randomization.shuffle([`${i}_1`, `${i}_2`]));
 }
 const shuffledPairs = jsPsych.randomization.shuffle(trialPairs);
 const mainTrialList = shuffledPairs.flat();
 
-// 2afc counterbalancing (left/right + order)
-const afcLeftIs24_1 = Math.random() < 0.5;
-const afc24Left = afcLeftIs24_1 ? '24_1' : '24_2';
-const afc24Right = afcLeftIs24_1 ? '24_2' : '24_1';
+// 2afc counterbalancing (left/right)
+const afcLeftIsHouse = Math.random() < 0.5;
+const afcHouseTriangleLeft = afcLeftIsHouse ? 'house' : 'triangle';
+const afcHouseTriangleRight = afcLeftIsHouse ? 'triangle' : 'house';
 
-const afcLeftIs10_1 = Math.random() < 0.5;
-const afc10Left = afcLeftIs10_1 ? '10_1' : '10_2';
-const afc10Right = afcLeftIs10_1 ? '10_2' : '10_1';
-
-const afc10First = Math.random() < 0.5;
+const afcLeftIs32_1 = Math.random() < 0.5;
+const afc32Left = afcLeftIs32_1 ? '32_1' : '32_2';
+const afc32Right = afcLeftIs32_1 ? '32_2' : '32_1';
 
 const warmupOrder = jsPsych.randomization.shuffle(['37_1', '37_2']);
 
 jsPsych.data.addProperties({
-    afc10_first: afc10First,
-    afc10_left_is_10_1: afcLeftIs10_1,
-    afc24_left_is_24_1: afcLeftIs24_1,
+    afc32_left_is_32_1: afcLeftIs32_1,
+    afc_left_is_house: afcLeftIsHouse,
     warmup_first: warmupOrder[0],
 });
 
 const allImages = mainTrialList.map(t => `stim_files/${t}.jpg`)
     .concat(warmupOrder.map(t => `stim_files/${t}.jpg`))
-    .concat(['stim_files/10_1.jpg', 'stim_files/10_2.jpg', 'stim_files/24_1.jpg', 'stim_files/24_2.jpg'])
+    .concat(['stim_files/afc/32_1.jpg', 'stim_files/afc/32_2.jpg'])
+    .concat(['stim_files/afc/house.jpg', 'stim_files/afc/triangle.png'])
     .concat([config.exampleFinal, config.exampleInitial, 'src/lab_logo.png']);
 
 // --- trial definitions ---
@@ -532,7 +532,7 @@ const mainTrials = mainTrialList.map((trial, index) => ({
     }
 }));
 
-const afc24Trial = {
+const afcHouseTriangleTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container" style="text-align: center;">
@@ -540,47 +540,47 @@ const afc24Trial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/${afc24Left}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
-        `<img src="stim_files/${afc24Right}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseTriangleLeft === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseTriangleRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer; transition: border-color 0.2s;">${choice}</button>`,
     data: {
         trial_type_custom: '2afc',
-        afc_pair: '24',
-        afc_left: afc24Left,
-        afc_right: afc24Right,
-        afc_order: afc10First ? 2 : 1,
+        afc_pair: 'house_triangle',
+        afc_left: afcHouseTriangleLeft,
+        afc_right: afcHouseTriangleRight,
+        afc_order: 1,
     },
     on_finish: function (data) {
-        data.afc_chosen = data.response === 0 ? afc24Left : afc24Right;
+        data.afc_chosen = data.response === 0 ? afcHouseTriangleLeft : afcHouseTriangleRight;
     },
 };
 
-const afc10Trial = {
+const afc32Trial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container" style="text-align: center;">
-            <p style="font-size: 18px;">${config.afcQuestion}</p>
+            <p style="font-size: 18px;">Which final structure is <b>taller</b>?</p>
         </div>
     `,
     choices: [
-        `<img src="stim_files/${afc10Left}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
-        `<img src="stim_files/${afc10Right}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer; transition: border-color 0.2s;">${choice}</button>`,
     data: {
         trial_type_custom: '2afc',
-        afc_pair: '10',
-        afc_left: afc10Left,
-        afc_right: afc10Right,
-        afc_order: afc10First ? 1 : 2,
+        afc_pair: '32',
+        afc_left: afc32Left,
+        afc_right: afc32Right,
+        afc_order: 1,
     },
     on_finish: function (data) {
-        data.afc_chosen = data.response === 0 ? afc10Left : afc10Right;
+        data.afc_chosen = data.response === 0 ? afc32Left : afc32Right;
     },
 };
 
-const afcTrials = afc10First ? [afc10Trial, afc24Trial] : [afc24Trial, afc10Trial];
+const afcTrials = [afcHouseTriangleTrial, afc32Trial];
 
 const strategyTrial = {
     type: jsPsychSurveyHtmlForm,
@@ -647,7 +647,11 @@ const endTrial = {
 
 // timeline
 
-const timeline = [
+const timeline = TESTING_MODE_2 ? [
+    preloadTrial,
+    ...afcTrials,
+    endTrial,
+] : [
     preloadTrial,
     captchaTrial,
     consentTrial,
