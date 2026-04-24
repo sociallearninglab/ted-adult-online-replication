@@ -14,6 +14,7 @@ const PROLIFIC_REDIRECT_URL = 'https://app.prolific.com/submissions/complete?cc=
 
 const urlParams = new URLSearchParams(window.location.search);
 let condition;
+const assignment_idx = urlParams.get('assignment_idx') || 'rand';
 
 if (TESTING_MODE) {
     condition = FORCED_CONDITION;
@@ -76,6 +77,7 @@ const filename = `${pid}_${startTimestamp}.csv`;
 jsPsych.data.addProperties({
     subject_id: subject_id,
     condition: condition,
+    assignment_idx: assignment_idx,
     prolific_pid: prolific_pid,
     study_id: study_id,
     session_id: session_id,

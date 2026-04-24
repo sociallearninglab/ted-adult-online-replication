@@ -35,14 +35,19 @@
           if (!res.ok) throw new Error(`DataPipe returned ${res.status}`);
           const data = await res.json();
           const idx = data.condition;
-          condition = (TOTAL_N && idx < TOTAL_N)
-            ? CONDITIONS[ASSIGNMENT_LIST[idx]]
-            : CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+          if (TOTAL_N && idx < TOTAL_N) {
+            condition = CONDITIONS[ASSIGNMENT_LIST[idx]];
+            params.set('assignment_idx', idx);
+          } else {
+            condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+            params.set('assignment_idx', 'rand');
+          }
           sessionStorage.setItem(cacheKey, condition);
         } catch (err) {
           // fallback if DataPipe unreachable or condition assignment not enabled yet
           console.warn('DataPipe condition assignment failed, falling back to random:', err);
           condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+          params.set('assignment_idx', 'rand');
         }
       }
 
