@@ -11,19 +11,20 @@
 <body>
   <p>Loading experiment, please wait...</p>
   <script>
-    // DataPipe n_conditions must match TOTAL_N. use gen_assignment_list.py to regen list.
+    // DataPipe n_conditions must match ASSIGNMENT_LIST.length. use gen_assignment_list.py to regen.
     const DATAPIPE_ID     = 'H8x9hsd4OeZC';
     const CONDITIONS      = ['diff', 'time'];
-    const TOTAL_N         = 10;                        // null = pure random
-    const ASSIGNMENT_LIST = [0,0,1,1,1,0,0,1,0,1];   // 5 diff, 5 time
+    const ASSIGNMENT_LIST = [0,0,1,1,1,0,0,1,0,1];   // 5 diff, 5 time (n=10 for testing)
 
     (async () => {
       const params = new URLSearchParams(window.location.search);
       const pid = params.get('PROLIFIC_PID') || 'no_pid';
 
       // don't burn a slot on reload — reuse cached assignment
-      const cacheKey = `condition_${DATAPIPE_ID}_${pid}`;
-      let condition = sessionStorage.getItem(cacheKey);
+      const condKey  = `condition_${DATAPIPE_ID}_${pid}`;
+      const idxKey   = `assignment_idx_${DATAPIPE_ID}_${pid}`;
+      let condition     = sessionStorage.getItem(condKey);
+      let assignment_idx = sessionStorage.getItem(idxKey);
 
       if (!condition) {
         try {
@@ -35,24 +36,28 @@
           if (!res.ok) throw new Error(`DataPipe returned ${res.status}`);
           const data = await res.json();
           const idx = data.condition;
-          if (TOTAL_N && idx < TOTAL_N) {
-            condition = CONDITIONS[ASSIGNMENT_LIST[idx]];
-            params.set('assignment_idx', idx);
+          if (idx < ASSIGNMENT_LIST.length) {
+            condition      = CONDITIONS[ASSIGNMENT_LIST[idx]];
+            assignment_idx = String(idx);
           } else {
-            condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
-            params.set('assignment_idx', 'rand');
+            condition      = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+            assignment_idx = 'rand';
           }
-          sessionStorage.setItem(cacheKey, condition);
+          sessionStorage.setItem(condKey, condition);
+          sessionStorage.setItem(idxKey, assignment_idx);
         } catch (err) {
           // fallback if DataPipe unreachable or condition assignment not enabled yet
           console.warn('DataPipe condition assignment failed, falling back to random:', err);
-          condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
-          params.set('assignment_idx', 'rand');
+          condition      = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+          assignment_idx = 'rand';
+          sessionStorage.setItem(condKey, condition);
+          sessionStorage.setItem(idxKey, assignment_idx);
         }
       }
 
-      console.log('Assigned condition:', condition);
+      console.log('Assigned condition:', condition, '| assignment_idx:', assignment_idx);
       params.set('condition', condition);
+      params.set('assignment_idx', assignment_idx);
       window.location.replace(`./experiment/?${params.toString()}`);
     })();
   </script>
