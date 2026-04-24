@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Loading experiment...</title>
+  <style>
+    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    p { font-size: 1.1em; color: #444; }
+  </style>
+</head>
+<body>
+  <p>Loading experiment, please wait...</p>
+  <script>
+    // TODO: before launching this experiment:
+    //   1. Decide the conditions and update CONDITIONS below.
+    //   2. Enable condition assignment on the DataPipe dashboard for this
+    //      experiment with the correct number of conditions.
+    //   3. Swap the random fallback below for the DataPipe version
+    //      (see diff_time_sliders_adult_replication/index.html for reference).
+    const DATAPIPE_ID = '8kEVnEyXX4Mp';
+    const CONDITIONS  = ['diff', 'time']; // placeholder — update when conditions are finalized
+
+    const params = new URLSearchParams(window.location.search);
+    const condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+    console.log('Assigned condition:', condition);
+    params.set('condition', condition);
+    window.location.replace(`./experiment/?${params.toString()}`);
+  </script>
+</body>
+</html>

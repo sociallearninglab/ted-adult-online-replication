@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Loading experiment...</title>
+  <style>
+    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    p { font-size: 1.1em; color: #444; }
+  </style>
+</head>
+<body>
+  <p>Loading experiment, please wait...</p>
+  <script>
+    // TODO: before launching, confirm condition assignment is enabled on the
+    // DataPipe dashboard for this experiment ID with n_conditions = 2.
+    const DATAPIPE_ID = 'H8x9hsd4OeZC';
+    const CONDITIONS  = ['diff', 'time'];
+
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const pid = params.get('PROLIFIC_PID') || 'no_pid';
+
+      // reload protection: if this participant (by PID) already got assigned
+      // in this browser session, reuse that assignment rather than burning
+      // another slot from DataPipe's counter.
+      const cacheKey = `condition_${DATAPIPE_ID}_${pid}`;
+      let condition = sessionStorage.getItem(cacheKey);
+
+      if (!condition) {
+        try {
+          const res = await fetch('https://pipe.jspsych.org/api/condition/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: '*/*' },
+            body: JSON.stringify({ experimentID: DATAPIPE_ID })
+          });
+          if (!res.ok) throw new Error(`DataPipe returned ${res.status}`);
+          const data = await res.json();
+          condition = CONDITIONS[data.condition];
+          sessionStorage.setItem(cacheKey, condition);
+        } catch (err) {
+          // fallback: if DataPipe is unreachable or condition assignment isn't
+          // enabled yet, fall back to random so the participant isn't stuck.
+          console.warn('DataPipe condition assignment failed, falling back to random:', err);
+          condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+        }
+      }
+
+      console.log('Assigned condition:', condition);
+      params.set('condition', condition);
+      window.location.replace(`./experiment/?${params.toString()}`);
+    })();
+  </script>
+</body>
+</html>

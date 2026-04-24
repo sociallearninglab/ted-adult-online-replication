@@ -1,16 +1,16 @@
-// adult online replication of block-building complexity judgments (ted study)
+// adult online replication — VR version
 // between-subjs: 'diff' (difficulty) vs 'time' (build time estimation)
 // slider ratings on 28 structures + 2 two-alt forced choice trials
 // data saved via datapipe, recruited on prolific, captcha via turnstile
 
-const DATAPIPE_EXPERIMENT_ID = 'H8x9hsd4OeZC';
+const DATAPIPE_EXPERIMENT_ID = '8kEVnEyXX4Mp';
 const TESTING_MODE_1 = false; // force condition for testing
 const TESTING_MODE_2 = false; // skip to end AFC testing
 const TESTING_MODE = TESTING_MODE_1 || TESTING_MODE_2;
 const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
-const PROLIFIC_REDIRECT_URL = 'https://app.prolific.com/submissions/complete?cc=CM05DVAH';
+const PROLIFIC_REDIRECT_URL = 'REPLACE_ME'; // TODO: paste Prolific completion URL when study is created
 
 const urlParams = new URLSearchParams(window.location.search);
 let condition;
@@ -140,7 +140,7 @@ const allImages = mainTrialList.map(t => `stim_files/${t}.jpg`)
     .concat(warmupOrder.map(t => `stim_files/${t}.jpg`))
     .concat(['stim_files/afc/32_1.jpg', 'stim_files/afc/32_2.jpg'])
     .concat(['stim_files/afc/house.jpg', 'stim_files/afc/triangle.png'])
-    .concat([config.exampleFinal, config.exampleInitial, 'src/lab_logo.png']);
+    .concat([config.exampleFinal, config.exampleInitial, '../../src/lab_logo.png']);
 
 // --- trial definitions ---
 
@@ -219,7 +219,7 @@ const consentTrial = {
     stimulus: `
         <div class="consent-container">
             <div style="text-align: center; margin-bottom: 20px;">
-                <img src="src/lab_logo.png" height="80">
+                <img src="../../src/lab_logo.png" height="80">
             </div>
             <p>By agreeing to take part in this research, you agree to view and rate a series of block structures. This experiment will take approximately 10 minutes to complete.</p>
             <p>By answering the following questions, you are participating in a study being performed by cognitive scientists in the Stanford Department of Psychology. If you have questions about this research, please contact us at <a href="mailto:sociallearninglab@stanford.edu">sociallearninglab@stanford.edu</a>.</p>
