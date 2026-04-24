@@ -11,14 +11,10 @@
 <body>
   <p>Loading experiment, please wait...</p>
   <script>
-    // TODO: before launching this experiment:
-    //   1. Decide the conditions and update CONDITIONS below.
-    //   2. Enable condition assignment on the DataPipe dashboard for this
-    //      experiment with the correct number of conditions.
-    //   3. Swap the random fallback below for the DataPipe version
-    //      (see diff_time_sliders_adult_replication/index.html for reference).
+    // TODO before launch: finalize CONDITIONS, enable DataPipe condition assignment,
+    // swap in DataPipe version (see diff_time_sliders_adult_replication/index.html)
     const DATAPIPE_ID = 'hodI459pnZK5';
-    const CONDITIONS  = ['diff', 'time']; // placeholder — update when conditions are finalized
+    const CONDITIONS  = ['diff', 'time']; // placeholder
 
     const params = new URLSearchParams(window.location.search);
     const condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];

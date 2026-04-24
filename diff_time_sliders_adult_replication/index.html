@@ -11,18 +11,17 @@
 <body>
   <p>Loading experiment, please wait...</p>
   <script>
-    // TODO: before launching, confirm condition assignment is enabled on the
-    // DataPipe dashboard for this experiment ID with n_conditions = 2.
-    const DATAPIPE_ID = 'H8x9hsd4OeZC';
-    const CONDITIONS  = ['diff', 'time'];
+    // DataPipe n_conditions must match TOTAL_N. use gen_assignment_list.py to regen list.
+    const DATAPIPE_ID     = 'H8x9hsd4OeZC';
+    const CONDITIONS      = ['diff', 'time'];
+    const TOTAL_N         = 10;                        // null = pure random
+    const ASSIGNMENT_LIST = [0,0,1,1,1,0,0,1,0,1];   // 5 diff, 5 time
 
     (async () => {
       const params = new URLSearchParams(window.location.search);
       const pid = params.get('PROLIFIC_PID') || 'no_pid';
 
-      // reload protection: if this participant (by PID) already got assigned
-      // in this browser session, reuse that assignment rather than burning
-      // another slot from DataPipe's counter.
+      // don't burn a slot on reload — reuse cached assignment
       const cacheKey = `condition_${DATAPIPE_ID}_${pid}`;
       let condition = sessionStorage.getItem(cacheKey);
 
@@ -35,11 +34,13 @@
           });
           if (!res.ok) throw new Error(`DataPipe returned ${res.status}`);
           const data = await res.json();
-          condition = CONDITIONS[data.condition];
+          const idx = data.condition;
+          condition = (TOTAL_N && idx < TOTAL_N)
+            ? CONDITIONS[ASSIGNMENT_LIST[idx]]
+            : CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
           sessionStorage.setItem(cacheKey, condition);
         } catch (err) {
-          // fallback: if DataPipe is unreachable or condition assignment isn't
-          // enabled yet, fall back to random so the participant isn't stuck.
+          // fallback if DataPipe unreachable or condition assignment not enabled yet
           console.warn('DataPipe condition assignment failed, falling back to random:', err);
           condition = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
         }

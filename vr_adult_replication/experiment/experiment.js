@@ -10,7 +10,7 @@ const TESTING_MODE = TESTING_MODE_1 || TESTING_MODE_2;
 const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
-const PROLIFIC_REDIRECT_URL = 'REPLACE_ME'; // TODO: paste Prolific completion URL when study is created
+const PROLIFIC_REDIRECT_URL = 'REPLACE_ME'; // TODO: fill in when study is created
 
 const urlParams = new URLSearchParams(window.location.search);
 let condition;
