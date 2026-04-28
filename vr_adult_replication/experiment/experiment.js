@@ -1,13 +1,11 @@
 // adult online replication — VR version
-// between-subjs: 'diff' (difficulty) vs 'time' (build time estimation)
-// slider ratings on 28 structures + 2 two-alt forced choice trials
-// data saved via datapipe, recruited on prolific, captcha via turnstile
+// between-subjs: 'diff' vs 'time'
 
 const DATAPIPE_EXPERIMENT_ID = '8kEVnEyXX4Mp';
 const TESTING_MODE_1 = false; // force condition for testing
 const TESTING_MODE_2 = false; // skip to end AFC testing
 const TESTING_MODE = TESTING_MODE_1 || TESTING_MODE_2;
-const FORCED_CONDITION = 'diff'; // only used when TESTING_MODE = true
+const FORCED_CONDITION = 'diff';
 const TURNSTILE_SITE_KEY = '0x4AAAAAACm5Uv12VL36op0J';
 const VERIFY_WORKER_URL = 'https://ted-verify.sll-stanford.workers.dev';
 const PROLIFIC_REDIRECT_URL = 'REPLACE_ME'; // TODO: fill in when study is created
