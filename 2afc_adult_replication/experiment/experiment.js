@@ -267,7 +267,7 @@ const mainTrials = mainTrialNums.map(num => {
 const checkHouseTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-        <div class="instruction-container" style="text-align: center;">
+        <div style="text-align: center;">
             <p style="font-size: 18px;">${config.checkQuestion}</p>
         </div>
     `,
@@ -283,7 +283,7 @@ const checkHouseTrial = {
 const check32Trial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-        <div class="instruction-container" style="text-align: center;">
+        <div style="text-align: center;">
             <p style="font-size: 18px;">Which final structure is <b>taller</b>?</p>
         </div>
     `,
