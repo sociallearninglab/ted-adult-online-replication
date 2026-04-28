@@ -59,7 +59,7 @@ const config = conditionConfig[condition];
 
 const jsPsych = initJsPsych({
     show_progress_bar: true,
-    auto_update_progress_bar: false,
+    auto_update_progress_bar: true,
     on_finish: function () {
         document.querySelector('.jspsych-content').innerHTML =
             '<p style="font-size: 1.2em; margin-top: 100px;">Saving your responses, please wait...</p>';
@@ -528,7 +528,6 @@ const mainTrials = mainTrialList.map((trial, index) => ({
             _currentArrowHandler = null;
         }
 
-        jsPsych.progressBar.progress = (index + 1) / totalMainTrials;
     }
 }));
 

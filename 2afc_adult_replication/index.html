@@ -56,7 +56,7 @@
       }
 
       console.log('Assigned condition:', condition, '| assignment_idx:', assignment_idx);
-      params.set('condition', condition);
+      params.set('condition', CONDITIONS.indexOf(condition)); // pass 0/1 to hide word from URL
       params.set('assignment_idx', assignment_idx);
       window.location.replace(`./experiment/?${params.toString()}`);
     })();

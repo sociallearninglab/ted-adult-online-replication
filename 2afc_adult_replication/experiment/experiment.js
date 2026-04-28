@@ -17,13 +17,14 @@ const assignment_idx = urlParams.get('assignment_idx') || 'rand';
 if (TESTING_MODE_1) {
     condition = FORCED_CONDITION;
 } else if (urlParams.has('condition')) {
-    condition = urlParams.get('condition');
+    const raw = urlParams.get('condition');
+    condition = raw === '0' ? 'easier' : raw === '1' ? 'harder' : raw;
 } else {
     condition = Math.random() < 0.5 ? 'easier' : 'harder';
 }
 
 const newUrl = new URL(window.location);
-newUrl.searchParams.set('condition', condition);
+newUrl.searchParams.set('condition', condition === 'easier' ? 0 : 1);
 window.history.replaceState({}, '', newUrl);
 
 const prolific_pid = urlParams.get('PROLIFIC_PID') || '';
@@ -45,7 +46,7 @@ const config = {
 
 const jsPsych = initJsPsych({
     show_progress_bar: true,
-    auto_update_progress_bar: false,
+    auto_update_progress_bar: true,
     on_finish: function () {
         document.querySelector('.jspsych-content').innerHTML =
             '<p style="font-size: 1.2em; margin-top: 100px;">Saving your responses, please wait...</p>';
