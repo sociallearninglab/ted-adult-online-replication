@@ -276,7 +276,7 @@ const checkHouseTrial = {
         `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
-    data: { trial_type_custom: 'check', check_pair: 'house_triangle', check_left: afcHouseLeft, check_right: afcHouseRight },
+    data: { trial_type_custom: 'check_house_triangle' },
     on_finish: function (data) { data.chosen = data.response === 0 ? afcHouseLeft : afcHouseRight; },
 };
 
@@ -292,7 +292,7 @@ const check32Trial = {
         `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
-    data: { trial_type_custom: 'check', check_pair: '32', check_left: afc32Left, check_right: afc32Right },
+    data: { trial_type_custom: 'check_32' },
     on_finish: function (data) { data.chosen = data.response === 0 ? afc32Left : afc32Right; },
 };
 
