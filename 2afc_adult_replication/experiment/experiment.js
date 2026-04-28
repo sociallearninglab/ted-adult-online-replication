@@ -80,6 +80,31 @@ window.addEventListener('beforeunload', function () {
     navigator.sendBeacon('https://pipe.jspsych.org/api/data/', blob);
 });
 
+// fullscreen enforcement + anti-cheat (disabled in TESTING_MODE)
+const fsOverlay = document.createElement('div');
+fsOverlay.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(255,255,255,0.97); z-index:99999; flex-direction:column; align-items:center; justify-content:center; text-align:center;';
+fsOverlay.innerHTML = `
+    <p style="font-size:1.2em; max-width:500px; margin-bottom:24px;">Please return to fullscreen to continue the experiment.</p>
+    <button id="fs-return-btn" style="font-size:15px; font-weight:600; padding:10px 30px; border:none; border-radius:6px; background:#3498db; color:#fff; cursor:pointer;">Return to Fullscreen</button>
+`;
+document.body.appendChild(fsOverlay);
+document.getElementById('fs-return-btn').onclick = () => document.documentElement.requestFullscreen().catch(() => {});
+
+if (!TESTING_MODE) {
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('copy',  e => e.preventDefault());
+    document.addEventListener('cut',   e => e.preventDefault());
+    document.addEventListener('paste', e => e.preventDefault());
+    document.addEventListener('fullscreenchange', () => {
+        fsOverlay.style.display = document.fullscreenElement ? 'none' : 'flex';
+    });
+    setInterval(() => {
+        if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
+            fsOverlay.style.display = 'flex';
+        }
+    }, 1000);
+}
+
 // trial lists
 const firstTrialNums = jsPsych.randomization.shuffle([1, 2, 3, 4, 5, 6, 7, 11, 12, 15]);
 const lastTrialNums  = jsPsych.randomization.shuffle([16, 17, 18]);
@@ -186,6 +211,9 @@ const consentTrial = {
     `,
     choices: ['I AGREE'],
     data: { trial_type_custom: 'consent' },
+    on_finish: function () {
+        if (!TESTING_MODE) document.documentElement.requestFullscreen().catch(() => {});
+    },
 };
 
 const instructionsTrial = {
@@ -204,7 +232,7 @@ const beginTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container" style="text-align: center;">
-            <p>You are ready to start. Please click continue when you are ready.</p>
+            <p>You're all set to start! Please click continue when you are ready to begin.</p>
         </div>
     `,
     choices: ['Continue'],
