@@ -228,6 +228,17 @@ const instructionsTrial = {
     data: { trial_type_custom: 'instructions' },
 };
 
+const instructions_wait_Trial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container">
+            <p>You will be asked to look at both images for ten seconds before responding.</p>
+        </div>
+    `,
+    choices: ['Next'],
+    data: { trial_type_custom: 'instructions' },
+};
+
 const beginTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -243,7 +254,8 @@ const btnStyle = 'padding: 8px; background: #f5f5f5; border: 2px solid #ccc; bor
 
 function afcWaitOnLoad() {
     const btns = document.querySelectorAll('.jspsych-btn');
-    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
+    document.body.style.cursor = 'none';
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
 
     const msg = document.createElement('p');
     msg.id = 'afc-wait-msg';
@@ -253,6 +265,7 @@ function afcWaitOnLoad() {
     if (content) content.prepend(msg);
 
     setTimeout(() => {
+        document.body.style.cursor = '';
         btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
         const m = document.getElementById('afc-wait-msg');
         if (m) m.remove();
@@ -392,6 +405,7 @@ const timeline = TESTING_MODE_2 ? [
     captchaTrial,
     consentTrial,
     instructionsTrial,
+    instructions_wait_Trial,
     beginTrial,
     ...mainTrials,
     checkHouseTrial,
