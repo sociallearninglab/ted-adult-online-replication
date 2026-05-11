@@ -241,6 +241,24 @@ const beginTrial = {
 
 const btnStyle = 'padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer;';
 
+function afcWaitOnLoad() {
+    const btns = document.querySelectorAll('.jspsych-btn');
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
+
+    const msg = document.createElement('p');
+    msg.id = 'afc-wait-msg';
+    msg.textContent = 'Look at the structures and think of your answer';
+    msg.style.cssText = 'font-size: 16px; color: #555; font-style: italic; margin: 0 0 16px;';
+    const content = document.querySelector('.jspsych-content');
+    if (content) content.prepend(msg);
+
+    setTimeout(() => {
+        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+        const m = document.getElementById('afc-wait-msg');
+        if (m) m.remove();
+    }, 10000);
+}
+
 const mainTrials = mainTrialNums.map(num => {
     const leftIs1  = Math.random() < 0.5;
     const imgLeft  = `${num}_${leftIs1 ? 1 : 2}`;
@@ -257,6 +275,7 @@ const mainTrials = mainTrialNums.map(num => {
             `<img src="stim_files/2afc_adult_images/${imgRight}.jpg" style="max-width: 500px; max-height: 350px; border-radius: 4px;">`,
         ],
         button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+        on_load: afcWaitOnLoad,
         data: { trial_type_custom: 'main', stimulus_id: num },
         on_finish: function (data) {
             data.chosen = data.response === 0 ? imgLeft : imgRight;
@@ -276,6 +295,7 @@ const checkHouseTrial = {
         `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+    on_load: afcWaitOnLoad,
     data: { trial_type_custom: 'check_house_triangle' },
     on_finish: function (data) { data.chosen = data.response === 0 ? afcHouseLeft : afcHouseRight; },
 };
@@ -292,6 +312,7 @@ const check32Trial = {
         `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+    on_load: afcWaitOnLoad,
     data: { trial_type_custom: 'check_32' },
     on_finish: function (data) { data.chosen = data.response === 0 ? afc32Left : afc32Right; },
 };
