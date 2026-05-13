@@ -106,7 +106,7 @@ if (!TESTING_MODE) {
 }
 
 // trial lists
-const simpleTrialNums = jsPsych.randomization.shuffle([1, 2, 3, 4, 5, 6, 7, 11, 12, 15]);
+const simpleTrialNums = jsPsych.randomization.shuffle([1, 2, 3, 4]);
 const complexTrialNums = jsPsych.randomization.shuffle([5, 6, 7, 11, 12, 15]);
 const agentTrialNums  = jsPsych.randomization.shuffle([16, 17, 18]);
 const mainTrialNums  = [...simpleTrialNums, ...complexTrialNums, ...agentTrialNums];
