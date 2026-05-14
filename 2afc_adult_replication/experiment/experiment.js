@@ -33,14 +33,16 @@ const session_id   = urlParams.get('SESSION_ID')   || '';
 
 const config = {
     easier: {
-        word:          'easier',
-        trialPrompt:   'Who thought it was <b>easier</b> to make?',
-        checkQuestion: 'Which drawing do you think would be <b>easier</b> to make?',
+        word:            'easier',
+        structurePrompt: 'Which one is <b>easier</b> to make?',
+        trialPrompt:     'Who thought it was <b>easier</b> to make?',
+        checkQuestion:   'Which drawing do you think would be <b>easier</b> to make?',
     },
     harder: {
-        word:          'harder',
-        trialPrompt:   'Who thought it was <b>harder</b> to make?',
-        checkQuestion: 'Which drawing do you think would be <b>harder</b> to make?',
+        word:            'harder',
+        structurePrompt: 'Which one is <b>harder</b> to make?',
+        trialPrompt:     'Who thought it was <b>harder</b> to make?',
+        checkQuestion:   'Which drawing do you think would be <b>harder</b> to make?',
     },
 }[condition];
 
@@ -226,6 +228,7 @@ const instructionsTrial = {
         </div>
     `,
     choices: ['Next'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'instructions' },
 };
 
@@ -237,6 +240,31 @@ const instructions_wait_Trial = {
         </div>
     `,
     choices: ['Next'],
+    on_load: instructionWaitOnLoad,
+    data: { trial_type_custom: 'instructions' },
+};
+
+const instructions_attention_Trial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container">
+            <p>Please pay close attention to the images. They can differ in their initial configuration, final configuration, or both.</p>
+        </div>
+    `,
+    choices: ['Next'],
+    on_load: instructionWaitOnLoad,
+    data: { trial_type_custom: 'instructions' },
+};
+
+const instructions_face_Trial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container">
+            <p>Note: you will see faces of different people. Please make your judgments based on the block structures rather than the actors&#39; facial expressions.</p>
+        </div>
+    `,
+    choices: ['Next'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'instructions' },
 };
 
@@ -248,10 +276,31 @@ const beginTrial = {
         </div>
     `,
     choices: ['Continue'],
+    on_load: instructionWaitOnLoad,
+    data: { trial_type_custom: 'begin' },
+};
+
+const agentTrials = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container" style="text-align: center;">
+            <p>Now you will be asked to indicate <b>who</b> thought the block structure was <b>${config.word}</b> to make.</p>
+        </div>
+    `,
+    choices: ['Continue'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'begin' },
 };
 
 const btnStyle = 'padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer;';
+
+function instructionWaitOnLoad() {
+    const btns = document.querySelectorAll('.jspsych-btn');
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
+    setTimeout(() => {
+        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+    }, 5000);
+}
 
 function afcWaitOnLoad() {
     const btns = document.querySelectorAll('.jspsych-btn');
@@ -273,7 +322,7 @@ function afcWaitOnLoad() {
     }, 10000);
 }
 
-const mainTrials = mainTrialNums.map(num => {
+function makeMainTrial(num, prompt) {
     const leftIs1  = Math.random() < 0.5;
     const imgLeft  = `${num}_${leftIs1 ? 1 : 2}`;
     const imgRight = `${num}_${leftIs1 ? 2 : 1}`;
@@ -281,7 +330,7 @@ const mainTrials = mainTrialNums.map(num => {
         type: jsPsychHtmlButtonResponse,
         stimulus: `
             <div style="text-align: center;">
-                <p style="font-size: 18px;">${config.trialPrompt}</p>
+                <p style="font-size: 18px;">${prompt}</p>
             </div>
         `,
         choices: [
@@ -295,7 +344,10 @@ const mainTrials = mainTrialNums.map(num => {
             data.chosen = data.response === 0 ? imgLeft : imgRight;
         },
     };
-});
+}
+
+const simpleComplexTrials = [...simpleTrialNums, ...complexTrialNums].map(num => makeMainTrial(num, config.structurePrompt));
+const agentMainTrials     = agentTrialNums.map(num => makeMainTrial(num, config.trialPrompt));
 
 const checkHouseTrial = {
     type: jsPsychHtmlButtonResponse,
@@ -407,8 +459,12 @@ const timeline = TESTING_MODE_2 ? [
     consentTrial,
     instructionsTrial,
     instructions_wait_Trial,
+    instructions_attention_Trial,
+    instructions_face_Trial,
     beginTrial,
-    ...mainTrials,
+    ...simpleComplexTrials,
+    agentTrials,
+    ...agentMainTrials,
     checkHouseTrial,
     check32Trial,
     strategyTrial,
