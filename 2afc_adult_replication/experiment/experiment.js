@@ -124,8 +124,10 @@ const afc32Right    = afcLeftIs32_1 ? '32_2' : '32_1';
 
 // preload
 const allImages = mainTrialNums.flatMap(n => [
-    `stim_files/2afc_adult_images/${n}_1.jpg`,
-    `stim_files/2afc_adult_images/${n}_2.jpg`,
+    `stim_files/vertical/${n}_1_vertical.jpg`,
+    `stim_files/vertical/${n}_2_vertical.jpg`,
+    `stim_files/question_finalstate/${n}_1_question.jpg`,
+    `stim_files/question_finalstate/${n}_2_question.jpg`,
 ]).concat([
     'stim_files/afc/32_1.jpg', 'stim_files/afc/32_2.jpg',
     'stim_files/afc/house.jpg', 'stim_files/afc/triangle.png',
@@ -140,7 +142,12 @@ const preloadTrial = {
 };
 
 const captcha_data = {};
-const captchaTrial = {
+const captchaTrial = TESTING_MODE ? {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<p>[TESTING MODE: captcha disabled]</p>',
+    choices: ['Continue'],
+    data: { trial_type_custom: 'captcha' },
+} : {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: '',
     on_load: function () {
@@ -236,7 +243,7 @@ const instructions_wait_Trial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container">
-            <p>You will be asked to look at both images for ten seconds before responding.</p>
+            <p>For each trial, you will first see a question about the block structures for 3 seconds. Then you will click "Continue" and view the final structures for 3 seconds before making your choice.</p>
         </div>
     `,
     choices: ['Next'],
@@ -295,6 +302,7 @@ const agentTrials = {
 const btnStyle = 'padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer;';
 
 function instructionWaitOnLoad() {
+    if (TESTING_MODE) return;
     const btns = document.querySelectorAll('.jspsych-btn');
     btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
     setTimeout(() => {
@@ -303,6 +311,7 @@ function instructionWaitOnLoad() {
 }
 
 function afcWaitOnLoad() {
+    if (TESTING_MODE) return;
     const btns = document.querySelectorAll('.jspsych-btn');
     document.body.style.cursor = 'none';
     btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
@@ -322,11 +331,41 @@ function afcWaitOnLoad() {
     }, 10000);
 }
 
+function afcWaitOnLoad3s() {
+    if (TESTING_MODE) return;
+    const btns = document.querySelectorAll('.jspsych-btn');
+    document.body.style.cursor = 'none';
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
+    setTimeout(() => {
+        document.body.style.cursor = '';
+        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+    }, 3000);
+}
+
 function makeMainTrial(num, prompt) {
     const leftIs1  = Math.random() < 0.5;
-    const imgLeft  = `${num}_${leftIs1 ? 1 : 2}`;
-    const imgRight = `${num}_${leftIs1 ? 2 : 1}`;
-    return {
+    const imgLeft  = `${num}_${leftIs1 ? 1 : 2}_vertical`;
+    const imgRight = `${num}_${leftIs1 ? 2 : 1}_vertical`;
+    const qLeft    = `${num}_${leftIs1 ? 1 : 2}_question`;
+    const qRight   = `${num}_${leftIs1 ? 2 : 1}_question`;
+
+    const questionTrial = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+            <div style="text-align: center;">
+                <p style="font-size: 18px;">${prompt}</p>
+                <div style="display: flex; justify-content: center; gap: 40px;">
+                    <img src="stim_files/question_finalstate/${qLeft}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">
+                    <img src="stim_files/question_finalstate/${qRight}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">
+                </div>
+            </div>
+        `,
+        choices: ['Continue'],
+        on_load: afcWaitOnLoad3s,
+        data: { trial_type_custom: 'main_question_preview', stimulus_id: num },
+    };
+
+    const responseTrial = {
         type: jsPsychHtmlButtonResponse,
         stimulus: `
             <div style="text-align: center;">
@@ -334,20 +373,22 @@ function makeMainTrial(num, prompt) {
             </div>
         `,
         choices: [
-            `<img src="stim_files/2afc_adult_images/${imgLeft}.jpg" style="max-width: 500px; max-height: 350px; border-radius: 4px;">`,
-            `<img src="stim_files/2afc_adult_images/${imgRight}.jpg" style="max-width: 500px; max-height: 350px; border-radius: 4px;">`,
+            `<img src="stim_files/vertical/${imgLeft}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
+            `<img src="stim_files/vertical/${imgRight}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
         ],
         button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
-        on_load: afcWaitOnLoad,
+        on_load: afcWaitOnLoad3s,
         data: { trial_type_custom: 'main', stimulus_id: num },
         on_finish: function (data) {
             data.chosen = data.response === 0 ? imgLeft : imgRight;
         },
     };
+
+    return [questionTrial, responseTrial];
 }
 
-const simpleComplexTrials = [...simpleTrialNums, ...complexTrialNums].map(num => makeMainTrial(num, config.structurePrompt));
-const agentMainTrials     = agentTrialNums.map(num => makeMainTrial(num, config.trialPrompt));
+const simpleComplexTrials = [...simpleTrialNums, ...complexTrialNums].flatMap(num => makeMainTrial(num, config.structurePrompt));
+const agentMainTrials     = agentTrialNums.flatMap(num => makeMainTrial(num, config.trialPrompt));
 
 const checkHouseTrial = {
     type: jsPsychHtmlButtonResponse,
@@ -357,8 +398,8 @@ const checkHouseTrial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/afc/${afcHouseLeft === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
-        `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseLeft === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 1050px; max-height: 525px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 1050px; max-height: 525px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
     on_load: afcWaitOnLoad,
@@ -374,8 +415,8 @@ const check32Trial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
-        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 787.5px; max-height: 393.75px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 787.5px; max-height: 393.75px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
     on_load: afcWaitOnLoad,
