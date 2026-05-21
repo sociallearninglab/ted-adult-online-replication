@@ -243,7 +243,7 @@ const instructions_wait_Trial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <div class="instruction-container">
-            <p>For each trial, you will first see a question about the block structures for 3 seconds. Then you will click "Continue" and view the final structures for 3 seconds before making your choice.</p>
+            <p>For each trial, you will first see each person's initial configuration of blocks without seeing what they built. Then, you will see what they built from their intiial configuration. </p>
         </div>
     `,
     choices: ['Next'],
