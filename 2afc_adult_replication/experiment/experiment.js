@@ -331,17 +331,6 @@ function afcWaitOnLoad() {
     }, 10000);
 }
 
-function afcWaitOnLoad3s() {
-    if (TESTING_MODE) return;
-    const btns = document.querySelectorAll('.jspsych-btn');
-    document.body.style.cursor = 'none';
-    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
-    setTimeout(() => {
-        document.body.style.cursor = '';
-        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
-    }, 3000);
-}
-
 function makeMainTrial(num, prompt) {
     const leftIs1  = Math.random() < 0.5;
     const imgLeft  = `${num}_${leftIs1 ? 1 : 2}_vertical`;
@@ -354,14 +343,40 @@ function makeMainTrial(num, prompt) {
         stimulus: `
             <div style="text-align: center;">
                 <p style="font-size: 18px;">${prompt}</p>
-                <div style="display: flex; justify-content: center; gap: 40px;">
-                    <img src="stim_files/question_finalstate/${qLeft}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">
-                    <img src="stim_files/question_finalstate/${qRight}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">
-                </div>
             </div>
         `,
-        choices: ['Continue'],
-        on_load: afcWaitOnLoad3s,
+        choices: [
+            `<img src="stim_files/question_finalstate/${qLeft}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
+            `<img src="stim_files/question_finalstate/${qRight}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
+        ],
+        button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+        on_load: function () {
+            const btns = document.querySelectorAll('.jspsych-btn');
+            btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
+
+            const continueBtnStyle = 'font-size: 15px; font-weight: 600; padding: 10px 30px; border: none; border-radius: 6px; background: #3498db; color: #fff; cursor: pointer; margin-top: 20px;';
+            const continueBtn = document.createElement('button');
+            continueBtn.textContent = 'Continue';
+            continueBtn.style.cssText = continueBtnStyle + ' visibility: hidden;';
+            continueBtn.onclick = () => jsPsych.finishTrial();
+            const btnGroup = document.getElementById('jspsych-html-button-response-btngroup');
+            if (btnGroup) {
+                const wrapper = document.createElement('div');
+                wrapper.style.textAlign = 'center';
+                wrapper.appendChild(continueBtn);
+                btnGroup.insertAdjacentElement('afterend', wrapper);
+            }
+
+            if (TESTING_MODE) {
+                continueBtn.style.visibility = 'visible';
+                return;
+            }
+            document.body.style.cursor = 'none';
+            setTimeout(() => {
+                document.body.style.cursor = '';
+                continueBtn.style.visibility = 'visible';
+            }, 4000);
+        },
         data: { trial_type_custom: 'main_question_preview', stimulus_id: num },
     };
 
@@ -377,7 +392,26 @@ function makeMainTrial(num, prompt) {
             `<img src="stim_files/vertical/${imgRight}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
         ],
         button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
-        on_load: afcWaitOnLoad3s,
+        on_load: function () {
+            const btnGroup = document.getElementById('jspsych-html-button-response-btngroup');
+            if (btnGroup) {
+                const spacer = document.createElement('button');
+                spacer.textContent = 'Continue';
+                spacer.style.cssText = 'font-size: 15px; font-weight: 600; padding: 10px 30px; border: none; border-radius: 6px; background: #3498db; color: #fff; margin-top: 20px; visibility: hidden;';
+                const wrapper = document.createElement('div');
+                wrapper.style.textAlign = 'center';
+                wrapper.appendChild(spacer);
+                btnGroup.insertAdjacentElement('afterend', wrapper);
+            }
+            if (TESTING_MODE) return;
+            const btns = document.querySelectorAll('.jspsych-btn');
+            document.body.style.cursor = 'none';
+            btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
+            setTimeout(() => {
+                document.body.style.cursor = '';
+                btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+            }, 4000);
+        },
         data: { trial_type_custom: 'main', stimulus_id: num },
         on_finish: function (data) {
             data.chosen = data.response === 0 ? imgLeft : imgRight;
