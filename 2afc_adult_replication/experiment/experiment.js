@@ -33,14 +33,16 @@ const session_id   = urlParams.get('SESSION_ID')   || '';
 
 const config = {
     easier: {
-        word:          'easier',
-        trialPrompt:   'Who thought it was <b>easier</b> to make?',
-        checkQuestion: 'Which drawing do you think would be <b>easier</b> to make?',
+        word:            'easier',
+        structurePrompt: 'Which one is <b>easier</b> to make?',
+        trialPrompt:     'Who thought it was <b>easier</b> to make?',
+        checkQuestion:   'Which drawing do you think would be <b>easier</b> to make?',
     },
     harder: {
-        word:          'harder',
-        trialPrompt:   'Who thought it was <b>harder</b> to make?',
-        checkQuestion: 'Which drawing do you think would be <b>harder</b> to make?',
+        word:            'harder',
+        structurePrompt: 'Which one is <b>harder</b> to make?',
+        trialPrompt:     'Who thought it was <b>harder</b> to make?',
+        checkQuestion:   'Which drawing do you think would be <b>harder</b> to make?',
     },
 }[condition];
 
@@ -106,9 +108,10 @@ if (!TESTING_MODE) {
 }
 
 // trial lists
-const firstTrialNums = jsPsych.randomization.shuffle([1, 2, 3, 4, 5, 6, 7, 11, 12, 15]);
-const lastTrialNums  = jsPsych.randomization.shuffle([16, 17, 18]);
-const mainTrialNums  = [...firstTrialNums, ...lastTrialNums];
+const simpleTrialNums = jsPsych.randomization.shuffle([1, 2, 3, 4]);
+const complexTrialNums = jsPsych.randomization.shuffle([5, 6, 7, 11, 12, 15]);
+const agentTrialNums  = jsPsych.randomization.shuffle([16, 17, 18]);
+const mainTrialNums  = [...simpleTrialNums, ...complexTrialNums, ...agentTrialNums];
 
 // check question left/right counterbalancing
 const afcLeftIsHouse = Math.random() < 0.5;
@@ -121,8 +124,10 @@ const afc32Right    = afcLeftIs32_1 ? '32_2' : '32_1';
 
 // preload
 const allImages = mainTrialNums.flatMap(n => [
-    `stim_files/2afc_adult_images/${n}_1.jpg`,
-    `stim_files/2afc_adult_images/${n}_2.jpg`,
+    `stim_files/vertical/${n}_1_vertical.jpg`,
+    `stim_files/vertical/${n}_2_vertical.jpg`,
+    `stim_files/question_finalstate/${n}_1_question.jpg`,
+    `stim_files/question_finalstate/${n}_2_question.jpg`,
 ]).concat([
     'stim_files/afc/32_1.jpg', 'stim_files/afc/32_2.jpg',
     'stim_files/afc/house.jpg', 'stim_files/afc/triangle.png',
@@ -137,7 +142,12 @@ const preloadTrial = {
 };
 
 const captcha_data = {};
-const captchaTrial = {
+const captchaTrial = TESTING_MODE ? {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<p>[TESTING MODE: captcha disabled]</p>',
+    choices: ['Continue'],
+    data: { trial_type_custom: 'captcha' },
+} : {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: '',
     on_load: function () {
@@ -225,6 +235,43 @@ const instructionsTrial = {
         </div>
     `,
     choices: ['Next'],
+    on_load: instructionWaitOnLoad,
+    data: { trial_type_custom: 'instructions' },
+};
+
+const instructions_wait_Trial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container">
+            <p>For each trial, you will first see each person's initial configuration of blocks without seeing what they built. Then, you will see their final configuration. </p>
+        </div>
+    `,
+    choices: ['Next'],
+    on_load: instructionWaitOnLoad,
+    data: { trial_type_custom: 'instructions' },
+};
+
+const instructions_attention_Trial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container">
+            <p>Please pay close attention to the images. They can differ in their initial configuration, final configuration, or both.</p>
+        </div>
+    `,
+    choices: ['Next'],
+    on_load: instructionWaitOnLoad,
+    data: { trial_type_custom: 'instructions' },
+};
+
+const instructions_face_Trial = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container">
+            <p>Note: you will see faces of different people. Please make your judgments based on the block structures rather than the actors&#39; facial expressions.</p>
+        </div>
+    `,
+    choices: ['Next'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'instructions' },
 };
 
@@ -236,33 +283,146 @@ const beginTrial = {
         </div>
     `,
     choices: ['Continue'],
+    on_load: instructionWaitOnLoad,
+    data: { trial_type_custom: 'begin' },
+};
+
+const agentTrials = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div class="instruction-container" style="text-align: center;">
+            <p>Now you will be asked to indicate <b>who</b> thought the block structure was <b>${config.word}</b> to make.</p>
+        </div>
+    `,
+    choices: ['Continue'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'begin' },
 };
 
 const btnStyle = 'padding: 8px; background: #f5f5f5; border: 2px solid #ccc; border-radius: 8px; margin: 0 20px; cursor: pointer;';
 
-const mainTrials = mainTrialNums.map(num => {
+function instructionWaitOnLoad() {
+    if (TESTING_MODE) return;
+    const btns = document.querySelectorAll('.jspsych-btn');
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
+    setTimeout(() => {
+        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+    }, 5000);
+}
+
+function afcWaitOnLoad() {
+    if (TESTING_MODE) return;
+    const btns = document.querySelectorAll('.jspsych-btn');
+    document.body.style.cursor = 'none';
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
+
+    const msg = document.createElement('p');
+    msg.id = 'afc-wait-msg';
+    msg.textContent = 'Look at the structures and think of your answer';
+    msg.style.cssText = 'font-size: 16px; color: #555; font-style: italic; margin: 0 0 16px;';
+    const content = document.querySelector('.jspsych-content');
+    if (content) content.prepend(msg);
+
+    setTimeout(() => {
+        document.body.style.cursor = '';
+        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+        const m = document.getElementById('afc-wait-msg');
+        if (m) m.remove();
+    }, 10000);
+}
+
+function makeMainTrial(num, prompt) {
     const leftIs1  = Math.random() < 0.5;
-    const imgLeft  = `${num}_${leftIs1 ? 1 : 2}`;
-    const imgRight = `${num}_${leftIs1 ? 2 : 1}`;
-    return {
+    const imgLeft  = `${num}_${leftIs1 ? 1 : 2}_vertical`;
+    const imgRight = `${num}_${leftIs1 ? 2 : 1}_vertical`;
+    const qLeft    = `${num}_${leftIs1 ? 1 : 2}_question`;
+    const qRight   = `${num}_${leftIs1 ? 2 : 1}_question`;
+
+    const questionTrial = {
         type: jsPsychHtmlButtonResponse,
         stimulus: `
             <div style="text-align: center;">
-                <p style="font-size: 18px;">${config.trialPrompt}</p>
+                <p style="font-size: 18px;">${prompt}</p>
             </div>
         `,
         choices: [
-            `<img src="stim_files/2afc_adult_images/${imgLeft}.jpg" style="max-width: 500px; max-height: 350px; border-radius: 4px;">`,
-            `<img src="stim_files/2afc_adult_images/${imgRight}.jpg" style="max-width: 500px; max-height: 350px; border-radius: 4px;">`,
+            `<img src="stim_files/question_finalstate/${qLeft}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
+            `<img src="stim_files/question_finalstate/${qRight}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
         ],
         button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+        on_load: function () {
+            const btns = document.querySelectorAll('.jspsych-btn');
+            btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
+
+            const continueBtnStyle = 'font-size: 15px; font-weight: 600; padding: 10px 30px; border: none; border-radius: 6px; background: #3498db; color: #fff; cursor: pointer; margin-top: 20px;';
+            const continueBtn = document.createElement('button');
+            continueBtn.textContent = 'Continue';
+            continueBtn.style.cssText = continueBtnStyle + ' visibility: hidden;';
+            continueBtn.onclick = () => jsPsych.finishTrial();
+            const btnGroup = document.getElementById('jspsych-html-button-response-btngroup');
+            if (btnGroup) {
+                const wrapper = document.createElement('div');
+                wrapper.style.textAlign = 'center';
+                wrapper.appendChild(continueBtn);
+                btnGroup.insertAdjacentElement('afterend', wrapper);
+            }
+
+            if (TESTING_MODE) {
+                continueBtn.style.visibility = 'visible';
+                return;
+            }
+            document.body.style.cursor = 'none';
+            setTimeout(() => {
+                document.body.style.cursor = '';
+                continueBtn.style.visibility = 'visible';
+            }, 4000);
+        },
+        data: { trial_type_custom: 'main_question_preview', stimulus_id: num },
+    };
+
+    const responseTrial = {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: `
+            <div style="text-align: center;">
+                <p style="font-size: 18px;">${prompt}</p>
+            </div>
+        `,
+        choices: [
+            `<img src="stim_files/vertical/${imgLeft}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
+            `<img src="stim_files/vertical/${imgRight}.jpg" style="max-width: 750px; max-height: 525px; border-radius: 4px;">`,
+        ],
+        button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+        on_load: function () {
+            const btnGroup = document.getElementById('jspsych-html-button-response-btngroup');
+            if (btnGroup) {
+                const spacer = document.createElement('button');
+                spacer.textContent = 'Continue';
+                spacer.style.cssText = 'font-size: 15px; font-weight: 600; padding: 10px 30px; border: none; border-radius: 6px; background: #3498db; color: #fff; margin-top: 20px; visibility: hidden;';
+                const wrapper = document.createElement('div');
+                wrapper.style.textAlign = 'center';
+                wrapper.appendChild(spacer);
+                btnGroup.insertAdjacentElement('afterend', wrapper);
+            }
+            if (TESTING_MODE) return;
+            const btns = document.querySelectorAll('.jspsych-btn');
+            document.body.style.cursor = 'none';
+            btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
+            setTimeout(() => {
+                document.body.style.cursor = '';
+                btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+            }, 4000);
+        },
         data: { trial_type_custom: 'main', stimulus_id: num },
         on_finish: function (data) {
             data.chosen = data.response === 0 ? imgLeft : imgRight;
         },
     };
-});
+
+    return [questionTrial, responseTrial];
+}
+
+const simpleComplexTrials = [...simpleTrialNums, ...complexTrialNums].flatMap(num => makeMainTrial(num, config.structurePrompt));
+const agentMainTrials     = agentTrialNums.flatMap(num => makeMainTrial(num, config.trialPrompt));
 
 const checkHouseTrial = {
     type: jsPsychHtmlButtonResponse,
@@ -272,10 +432,11 @@ const checkHouseTrial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/afc/${afcHouseLeft === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
-        `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 700px; max-height: 350px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseLeft === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 1050px; max-height: 525px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 1050px; max-height: 525px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+    on_load: afcWaitOnLoad,
     data: { trial_type_custom: 'check_house_triangle' },
     on_finish: function (data) { data.chosen = data.response === 0 ? afcHouseLeft : afcHouseRight; },
 };
@@ -288,10 +449,11 @@ const check32Trial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
-        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 525px; max-height: 262.5px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 787.5px; max-height: 393.75px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 787.5px; max-height: 393.75px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
+    on_load: afcWaitOnLoad,
     data: { trial_type_custom: 'check_32' },
     on_finish: function (data) { data.chosen = data.response === 0 ? afc32Left : afc32Right; },
 };
@@ -371,8 +533,13 @@ const timeline = TESTING_MODE_2 ? [
     captchaTrial,
     consentTrial,
     instructionsTrial,
+    instructions_wait_Trial,
+    instructions_attention_Trial,
+    instructions_face_Trial,
     beginTrial,
-    ...mainTrials,
+    ...simpleComplexTrials,
+    agentTrials,
+    ...agentMainTrials,
     checkHouseTrial,
     check32Trial,
     strategyTrial,
