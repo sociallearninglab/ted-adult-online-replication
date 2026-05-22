@@ -315,20 +315,10 @@ function afcWaitOnLoad() {
     const btns = document.querySelectorAll('.jspsych-btn');
     document.body.style.cursor = 'none';
     btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'none'; });
-
-    const msg = document.createElement('p');
-    msg.id = 'afc-wait-msg';
-    msg.textContent = 'Look at the structures and think of your answer';
-    msg.style.cssText = 'font-size: 16px; color: #555; font-style: italic; margin: 0 0 16px;';
-    const content = document.querySelector('.jspsych-content');
-    if (content) content.prepend(msg);
-
     setTimeout(() => {
         document.body.style.cursor = '';
         btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
-        const m = document.getElementById('afc-wait-msg');
-        if (m) m.remove();
-    }, 10000);
+    }, 4000);
 }
 
 function makeMainTrial(num, prompt) {
@@ -432,8 +422,8 @@ const checkHouseTrial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/afc/${afcHouseLeft === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 1050px; max-height: 525px; border-radius: 4px;">`,
-        `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 1050px; max-height: 525px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseLeft === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 400px; max-height: 400px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afcHouseRight === 'house' ? 'house.jpg' : 'triangle.png'}" style="max-width: 400px; max-height: 400px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
     on_load: afcWaitOnLoad,
@@ -449,8 +439,8 @@ const check32Trial = {
         </div>
     `,
     choices: [
-        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 787.5px; max-height: 393.75px; border-radius: 4px;">`,
-        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 787.5px; max-height: 393.75px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Left}.jpg" style="max-width: 400px; max-height: 400px; border-radius: 4px;">`,
+        `<img src="stim_files/afc/${afc32Right}.jpg" style="max-width: 400px; max-height: 400px; border-radius: 4px;">`,
     ],
     button_html: (choice) => `<button class="jspsych-btn" style="${btnStyle}">${choice}</button>`,
     on_load: afcWaitOnLoad,
