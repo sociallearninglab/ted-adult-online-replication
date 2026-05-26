@@ -386,6 +386,15 @@ const micTestTrial = {
     },
 };
 
+function instructionWaitOnLoad() {
+    if (TESTING_MODE) return;
+    const btns = document.querySelectorAll('.jspsych-btn');
+    btns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
+    setTimeout(() => {
+        btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+    }, 5000);
+}
+
 const instructionsTrial = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -396,6 +405,7 @@ const instructionsTrial = {
         </div>
     `,
     choices: ['Start'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'instructions' },
 };
 
@@ -409,6 +419,7 @@ const exampleIntroTrial = {
         </div>
     `,
     choices: ['Next'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'example_intro' },
 };
 
@@ -421,6 +432,7 @@ const exampleInitTrial = {
         </div>
     `,
     choices: ['Next'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'example_init' },
 };
 
@@ -435,6 +447,7 @@ const warmupTrials = warmupOrder.map(trial => {
             </div>
         `,
         choices: ['Next'],
+        on_load: instructionWaitOnLoad,
         data: { trial_type_custom: 'warmup', stimulus_id: trial },
     };
 });
@@ -448,6 +461,7 @@ const beginMainTrial = {
         </div>
     `,
     choices: ['Continue'],
+    on_load: instructionWaitOnLoad,
     data: { trial_type_custom: 'begin_main' },
 };
 
