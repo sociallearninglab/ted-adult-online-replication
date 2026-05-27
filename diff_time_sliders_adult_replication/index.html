@@ -12,6 +12,8 @@
   <p>Loading experiment, please wait...</p>
   <script>
     // DataPipe n_conditions must match ASSIGNMENT_LIST.length. use gen_assignment_list.py to regen.
+    // Set CURRENT_ASSIGNMENT_IDX to the current DataPipe counter value to effectively restart from the beginning of the list.
+    const CURRENT_ASSIGNMENT_IDX = 0;
     const DATAPIPE_ID     = 'H8x9hsd4OeZC';
     const CONDITIONS      = ['diff', 'time'];
     const ASSIGNMENT_LIST = [1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1];
@@ -36,8 +38,9 @@
           if (!res.ok) throw new Error(`DataPipe returned ${res.status}`);
           const data = await res.json();
           const idx = data.condition;
-          if (idx < ASSIGNMENT_LIST.length) {
-            condition      = CONDITIONS[ASSIGNMENT_LIST[idx]];
+          const effectiveIdx = idx - CURRENT_ASSIGNMENT_IDX - 1;
+          if (effectiveIdx >= 0 && effectiveIdx < ASSIGNMENT_LIST.length) {
+            condition      = CONDITIONS[ASSIGNMENT_LIST[effectiveIdx]];
             assignment_idx = String(idx);
           } else {
             condition      = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
