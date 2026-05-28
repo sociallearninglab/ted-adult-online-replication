@@ -18,51 +18,11 @@
     const CONDITIONS      = ['easier', 'harder'];
     const ASSIGNMENT_LIST = [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0];
 
-    (async () => {
-      const params = new URLSearchParams(window.location.search);
-      const pid = params.get('PROLIFIC_PID') || 'no_pid';
-
-      // don't burn a slot on reload — reuse cached assignment
-      const condKey      = `condition_${DATAPIPE_ID}_${pid}`;
-      const idxKey       = `assignment_idx_${DATAPIPE_ID}_${pid}`;
-      let condition      = sessionStorage.getItem(condKey);
-      let assignment_idx = sessionStorage.getItem(idxKey);
-
-      if (!condition) {
-        try {
-          const res = await fetch('https://pipe.jspsych.org/api/condition/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: '*/*' },
-            body: JSON.stringify({ experimentID: DATAPIPE_ID })
-          });
-          if (!res.ok) throw new Error(`DataPipe returned ${res.status}`);
-          const data = await res.json();
-          const idx = data.condition;
-          const effectiveIdx = idx - CURRENT_ASSIGNMENT_IDX - 1;
-          if (effectiveIdx >= 0 && effectiveIdx < ASSIGNMENT_LIST.length) {
-            condition      = CONDITIONS[ASSIGNMENT_LIST[effectiveIdx]];
-            assignment_idx = String(idx);
-          } else {
-            condition      = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
-            assignment_idx = 'rand';
-          }
-          sessionStorage.setItem(condKey, condition);
-          sessionStorage.setItem(idxKey, assignment_idx);
-        } catch (err) {
-          // fallback if DataPipe unreachable or condition assignment not enabled yet
-          console.warn('DataPipe condition assignment failed, falling back to random:', err);
-          condition      = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
-          assignment_idx = 'rand';
-          sessionStorage.setItem(condKey, condition);
-          sessionStorage.setItem(idxKey, assignment_idx);
-        }
-      }
-
-      console.log('Assigned condition:', condition, '| assignment_idx:', assignment_idx);
-      params.set('condition', CONDITIONS.indexOf(condition)); // pass 0/1 to hide word from URL
-      params.set('assignment_idx', assignment_idx);
-      window.location.replace(`./experiment/?${params.toString()}`);
-    })();
+    // condition hard-coded to 'easier' for this run
+    const params = new URLSearchParams(window.location.search);
+    params.set('condition', CONDITIONS.indexOf('easier'));
+    params.set('assignment_idx', 'hardcoded');
+    window.location.replace(`./experiment/?${params.toString()}`);
   </script>
 </body>
 </html>
